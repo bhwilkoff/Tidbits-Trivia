@@ -20,6 +20,8 @@ struct LiveBuilderView_macOS: View {
     @Environment(AppStore.self) private var appStore   // the deep-link inbox's pending package
     @State private var selectedID: LiveEvent.ID?
     @State private var working = LiveEvent(name: "New Event")
+    /// A2.12: the nights this Mac has actually run.
+    @State private var showNights = false
     @State private var newFormat: GameMode = .classic
     @State private var newCategory: TriviaCategory = .named("mixed")
     @State private var newCount = 5
@@ -80,6 +82,7 @@ struct LiveBuilderView_macOS: View {
             previewSolo: { store.upsert(working); onPreview(working) },
             duplicateEvent: { duplicateEvent(working, fresh: working.weekday != nil) },
             refreshRepeats: { Task { await refreshRepeats() } },
+            showNights: { showNights = true },   // A2.12
             importQuestions: { importCSV() },
             importQuickQuestions: { importQuickQuestions() },
             importEvent: { importEvent() },
@@ -243,6 +246,10 @@ struct LiveBuilderView_macOS: View {
                                      },
                                      onCancel: { editing = nil })
         }
+        .sheet(isPresented: $showNights) { LiveNightsSheet_macOS(onClose: { showNights = false }) }   // A2.12
+        // TIDBITS_LIVE_NIGHTS=1 — open the archive on launch (nothing else can reach it
+        // without a click, so without this the surface is untestable on the glass).
+        .task { if ProcessInfo.processInfo.environment["TIDBITS_LIVE_NIGHTS"] == "1" { showNights = true } }
     }
 
     // MARK: Event list
@@ -303,8 +310,26 @@ struct LiveBuilderView_macOS: View {
                 if let id, let ev = store.events.first(where: { $0.id == id }) { working = ev }
             }
             }
+            // A2.12: the door to the nights already run. Below the events, because an
+            // event is a plan and a night is a thing that happened — related, not the same.
+            Divider().overlay(Tidbits.Palette.border)
+            Button { showNights = true } label: {
+                Label(nightsLabel, systemImage: "clock.arrow.circlepath")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.borderless)
+            .padding(12)
+            .help("The nights you have run on this Mac — standings, how each night went, and the answer sheet")
+            .accessibilityIdentifier("live.nightsRun")
         }
         .frame(width: 240)
+    }
+
+    /// "Nights you've run" with the count once there is one — the count is what tells a
+    /// host the archive is theirs rather than a feature they have not used.
+    private var nightsLabel: String {
+        let n = LiveNightArchive.shared.nights.count
+        return n == 0 ? "Nights you've run" : "Nights you've run (\(n))"
     }
 
     // MARK: Editor

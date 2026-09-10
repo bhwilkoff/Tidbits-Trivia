@@ -841,6 +841,7 @@ struct LiveHostView_macOS: View {
     @State private var tieGroup: [LiveTeam] = []
     @State private var editingCurrent: QuestionDraft?
     @State private var renaming: LiveHostNet.Joined?   // A3.12
+    @State private var archived = false                // A2.12: this night is kept once
     @State private var renameText = ""
 
     var body: some View {
@@ -1485,6 +1486,18 @@ struct LiveHostView_macOS: View {
 
     /// Wave C: export the unified standings (phone + paper teams) to a CSV the host keeps.
     /// A3.8: the answer sheet — every team's submission and credit per question.
+    /// A2.12: keep this night on the Mac — final standings + the answer sheet, from
+    /// which the A3.11 report regenerates. Once per night: the wrap view can re-appear
+    /// (a tie-break, a re-render) and a host should not collect three copies of Tuesday.
+    private func archiveNight() {
+        guard !archived else { return }
+        archived = true
+        LiveNightArchive.shared.record(
+            name: session.event.name, venue: session.event.venue,
+            standings: finalStandings.map { ArchivedNight.Row(name: $0.name, score: $0.score, paper: $0.paper) },
+            log: session.answerLog)
+    }
+
     private func exportAnswersCSV() {
         let csv = LiveAnswerLog.csv(session.answerLog)
         let panel = NSSavePanel()
@@ -1787,14 +1800,14 @@ struct LiveHostView_macOS: View {
                 ForEach(Array(rows.enumerated()), id: \.element.id) { i, team in
                     HStack(spacing: 12) {
                         Text("\(i + 1)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 30)
-                        if i == 0 { Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow) }
+                        if i == 0, team.score > 0 { Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow) }   // nobody wins a night nobody scored
                         Text(team.name).font(.title2.weight(.semibold)).foregroundStyle(Tidbits.Palette.ink)
                         if team.paper { Text("paper").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft) }
                         Spacer()
                         Text("\(team.score)").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                     }
                     .padding(16).frame(maxWidth: .infinity)
-                    .quietCard(fill: i == 0 ? Tidbits.Palette.yellow.opacity(0.35) : Tidbits.Palette.surface)
+                    .quietCard(fill: i == 0 && team.score > 0 ? Tidbits.Palette.yellow.opacity(0.35) : Tidbits.Palette.surface)
                 }
                 if rows.isEmpty { Text("No teams were scored this night.").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft) }
                 nightReport   // A3.11: how the night went, from the answer sheet
@@ -1810,6 +1823,10 @@ struct LiveHostView_macOS: View {
                 .padding(.top, 8)
             }
             .padding(28).frame(maxWidth: 620).frame(maxWidth: .infinity)
+            // A2.12: the night is kept. The wrap is the one moment where the standings
+            // and the sheet are both final, so archive here rather than chasing `finished`
+            // from three call sites (Next past the last question, Jump-to-standings, the hook).
+            .task { archiveNight() }
         }
         .alert("Rename team", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } }), presenting: renaming) { team in
             TextField("Team name", text: $renameText)

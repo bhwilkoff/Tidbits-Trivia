@@ -77,6 +77,9 @@ public sealed class LiveNightHost : ObservableObject
     public HashSet<string> ManuallyAccepted { get; } = new();
     /// A3.8: the night's answer sheet, one record per revealed question.
     public List<LiveAnswerRecord> AnswerLog { get; } = new();
+    /// A2.12: where a finished night is kept (null in tests that do not care).
+    public Store.NightArchive? Archive { get; set; }
+    private bool _archived;
 
     /// Points DEDUCTED for a wrong answer, 0 = off (the default, and what every
     /// night so far has played under). QuizXpress offers this and pub hosts use it
@@ -818,6 +821,16 @@ public sealed class LiveNightHost : ObservableObject
 
     public async Task End()
     {
+        // A2.12: the night is kept. End() is the one place both the last Next() and the
+        // host's own finish converge, and _archived makes a second call a no-op — a host
+        // should not collect three copies of Tuesday.
+        if (!_archived)
+        {
+            _archived = true;
+            Archive?.Record(Title, Net.Venue,
+                Standings.Select(j => new Store.ArchivedNight.Row { Name = j.Name, Score = j.Score, Paper = j.Id.StartsWith("paper:", StringComparison.Ordinal) }).ToList(),
+                AnswerLog);
+        }
         CurrentStage = Stage.Ended;
         await Net.SetState("ended");
         await Net.Publish(EndedPub());

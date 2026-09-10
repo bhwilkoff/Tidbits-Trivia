@@ -4,8 +4,9 @@ import Foundation
 /// team per revealed question — what they submitted and what the host's scorer
 /// paid — kept on the HOST as the night goes, because the room only ever holds
 /// the current question's answers. Exported as a long CSV beside the standings.
-nonisolated struct LiveAnswerRecord: Equatable, Sendable, Identifiable {
-    struct Line: Equatable, Sendable { var uid: String; var team: String; var submitted: String; var points: Int }
+/// Codable since 2026-09-10: the sheet is archived with the night (A2.12).
+nonisolated struct LiveAnswerRecord: Codable, Equatable, Sendable, Identifiable {
+    struct Line: Codable, Equatable, Sendable { var uid: String; var team: String; var submitted: String; var points: Int }
     var qid: String
     var round: Int
     var number: Int

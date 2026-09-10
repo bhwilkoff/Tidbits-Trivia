@@ -69,7 +69,14 @@ public partial class LiveView : UserControl
         // Index 0 = one-off; 1..7 = Sunday..Saturday (DayOfWeek 0..6 = index-1).
         WeekdayBox.ItemsSource = new[] { "One-off", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
         WeekdayBox.SelectedIndex = 0;
-        BuildSavedEvents();
+        BuildSavedEvents(); BuildNightsRun();
+        if (Services.LaunchHooks.LiveNights)
+            Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+            {
+                var nights = Tidbits.Core.Store.NightArchive.Shared.Value.Nights;
+                Services.LaunchHooks.Diag($"nights hook: archived={nights.Count}");
+                if (nights.Count > 0) await ShowNightAsync(nights[0]);
+            }, Avalonia.Threading.DispatcherPriority.Background);
 
         // TIDBITS_LIVE_HOST=<preset name> — open a real hosted room straight from launch,
         // the Windows twin of Apple's TIDBITS_NIGHT_HOST and Android's tidbits_night_host.
@@ -990,7 +997,7 @@ public partial class LiveView : UserControl
     {
         if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }
         GameData.Shared.Value.LiveEvents.Save(CurrentEvent());
-        BuildSavedEvents();
+        BuildSavedEvents(); BuildNightsRun();
     }
 
     /// Build an audio or video round from picked clips — the Windows mirror of
@@ -1548,7 +1555,7 @@ public partial class LiveView : UserControl
         }
         LoadEvent(ev);
         GameData.Shared.Value.LiveEvents.Save(ev);
-        BuildSavedEvents();
+        BuildSavedEvents(); BuildNightsRun();
         ShowStatus(problems.Count == 0
             ? $"Imported \u201C{ev.Name}\u201D \u2014 {ev.TotalQuestions} questions across {ev.Rounds.Count} rounds."
             : $"Imported \u201C{ev.Name}\u201D with {problems.Count} problem(s): {string.Join("; ", problems.Take(3))}");
@@ -1691,6 +1698,128 @@ public partial class LiveView : UserControl
             row.Child = grid;
             SavedEvents.Children.Add(row);
         }
+    }
+
+    /// A2.12: the nights this machine has run, newest first. A pub host runs the same
+    /// room every week and is asked "who won last time?" — the night used to vanish when
+    /// the cockpit closed.
+    private void BuildNightsRun()
+    {
+        NightsRun.Children.Clear();
+        var nights = Tidbits.Core.Store.NightArchive.Shared.Value.Nights;
+        NightsHeader.IsVisible = nights.Count > 0;
+        foreach (var night in nights)
+        {
+            var n = night;
+            var row = new Border
+            {
+                Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0F808080")),
+                CornerRadius = new Avalonia.CornerRadius(10), Padding = new Avalonia.Thickness(14, 10),
+            };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+            grid.Children.Add(new StackPanel
+            {
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Spacing = 1,
+                Children =
+                {
+                    new TextBlock { Text = n.Name, FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                    new TextBlock
+                    {
+                        Text = n.EndedAt.LocalDateTime.ToString("ddd d MMM") + " · " + n.Headline
+                               + (string.IsNullOrWhiteSpace(n.Venue) ? "" : " · " + n.Venue),
+                        FontSize = 12, Opacity = 0.65, TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                    },
+                },
+            });
+            var open = new Button { Content = "Open", Padding = new Avalonia.Thickness(14, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+            AutomationProperties.SetName(open, $"Open the night {n.Name}");
+            open.Click += async (_, _) => await ShowNightAsync(n);
+            Grid.SetColumn(open, 1);
+            grid.Children.Add(open);
+            var del = new Button
+            {
+                Content = new FluentAvalonia.UI.Controls.FASymbolIcon
+                    { Symbol = FluentAvalonia.UI.Controls.FASymbol.Dismiss, FontSize = 14 },
+                Padding = new Avalonia.Thickness(10, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0),
+            };
+            AutomationProperties.SetName(del, $"Forget the night {n.Name}");
+            del.Click += (_, _) => { Tidbits.Core.Store.NightArchive.Shared.Value.Delete(n.Id); BuildNightsRun(); };
+            Grid.SetColumn(del, 2);
+            grid.Children.Add(del);
+            row.Child = grid;
+            NightsRun.Children.Add(row);
+        }
+    }
+
+    /// One archived night: the final standings, how the night went (recomputed from the
+    /// archived sheet), and the answer sheet again as CSV.
+    private async Task ShowNightAsync(Tidbits.Core.Store.ArchivedNight n)
+    {
+        var panel = new StackPanel { Spacing = 10, MinWidth = 460 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = n.EndedAt.LocalDateTime.ToString("dddd d MMMM yyyy, HH:mm")
+                   + (string.IsNullOrWhiteSpace(n.Venue) ? "" : " · " + n.Venue),
+            Opacity = 0.7, TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+        });
+        if (n.Standings.Count == 0)
+        {
+            panel.Children.Add(new TextBlock { Text = "No teams were scored this night.", Opacity = 0.7 });
+        }
+        else
+        {
+            panel.Children.Add(new TextBlock { Text = "Final standings", FontWeight = Avalonia.Media.FontWeight.Bold });
+            for (int i = 0; i < n.Standings.Count; i++)
+            {
+                var r = n.Standings[i];
+                var line = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+                var pos = new TextBlock { Text = $"{i + 1}.", FontWeight = Avalonia.Media.FontWeight.Bold, Margin = new Avalonia.Thickness(0, 0, 8, 0) };
+                var name = new TextBlock { Text = r.Paper ? r.Name + "  (paper)" : r.Name, TextWrapping = Avalonia.Media.TextWrapping.Wrap };
+                var score = new TextBlock { Text = r.Score.ToString(), FontWeight = Avalonia.Media.FontWeight.Bold };
+                Grid.SetColumn(name, 1); Grid.SetColumn(score, 2);
+                line.Children.Add(pos); line.Children.Add(name); line.Children.Add(score);
+                panel.Children.Add(line);
+            }
+        }
+        var report = n.Report;
+        if (!report.IsEmpty)
+        {
+            panel.Children.Add(new TextBlock { Text = "How the night went", FontWeight = Avalonia.Media.FontWeight.Bold, Margin = new Avalonia.Thickness(0, 6, 0, 0) });
+            panel.Children.Add(new TextBlock
+            {
+                Text = $"{LiveNightReport.Percent(report.OverallAccuracy)} answers right · "
+                       + $"{LiveNightReport.Percent(report.Participation)} tables answering · {report.Questions.Count} questions",
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            });
+            if (report.Hardest is { } h)
+                panel.Children.Add(new TextBlock { Text = $"HARDEST · {LiveNightReport.Percent(h.Accuracy)} of {h.Answered} got it — {h.Prompt} ({h.Answer})", TextWrapping = Avalonia.Media.TextWrapping.Wrap, Opacity = 0.8 });
+            if (report.Easiest is { } e2)
+                panel.Children.Add(new TextBlock { Text = $"EASIEST · {LiveNightReport.Percent(e2.Accuracy)} of {e2.Answered} got it — {e2.Prompt} ({e2.Answer})", TextWrapping = Avalonia.Media.TextWrapping.Wrap, Opacity = 0.8 });
+        }
+        var dlg = new FluentAvalonia.UI.Controls.FAContentDialog
+        {
+            Title = n.Name,
+            Content = new ScrollViewer { Content = panel, MaxHeight = 460 },
+            PrimaryButtonText = n.Log.Count > 0 ? "Export answer sheet…" : null,
+            CloseButtonText = "Done",
+        };
+        if (await dlg.ShowAsync() == FluentAvalonia.UI.Controls.FAContentDialogResult.Primary) await ExportArchivedAnswers(n);
+    }
+
+    private async Task ExportArchivedAnswers(Tidbits.Core.Store.ArchivedNight n)
+    {
+        var top = TopLevel.GetTopLevel(this);
+        if (top is null) return;
+        var file = await top.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+        {
+            Title = "Export answer sheet",
+            SuggestedFileName = $"{n.Name} - answers.csv",
+            DefaultExtension = "csv",
+        });
+        if (file is null) return;
+        await using var stream = await file.OpenWriteAsync();
+        await using var writer = new System.IO.StreamWriter(stream);
+        await writer.WriteAsync(LiveExport.AnswersCsv(n.Log));
     }
 
     private async void StartHosting(NightPlan plan, string title, LiveEvent? branding = null)

@@ -2392,6 +2392,30 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10ae — Live loop tick 31: the night is kept.** Audit item "event
+history feed", scoped to the surface the brief is about: a finished night
+existed only while it was happening — close the cockpit and the standings, the
+answer sheet and the A3.11 report were gone, though a pub host is asked "who won
+last time?" every week. A2.12 / 3.76: `LiveNightArchive` (Swift, UserDefaults
+like `LivePlayedLog`) and `NightArchive` (C#, JSON in LocalAppData), each
+keeping date, venue, final standings and the answer sheet, with the report
+RECOMPUTED from that sheet so an archived night and a live one cannot disagree;
+capped 20 nights / 600 rows. Mac: a "Nights you've run (N)" door under the
+events, a master-detail sheet, Print results / Export answer sheet / Delete,
+menu item, `TIDBITS_LIVE_NIGHTS=1`. Windows: the same list under the saved
+events with an Open dialog, recorded in `LiveNightHost.End()` (the one
+convergence point), `LiveHostNet.Venue` kept, plus a new
+`TIDBITS_LIVE_FINISH_AT` because the box had no way to drive a night to its
+wrap. 13 tests across the two stacks. **Found on the glass:** the first Mac run
+archived a night nobody had scored and crowned "Table 2 won with 0" — the
+degenerate outcome the wrap had always had. Nobody now wins a night nobody
+scored, on the wrap and in the archive (A2.12a), and the two nights sit side by
+side in the shot proving it. **Verified on the real Mac and the real Windows
+box** (`e2e_nights.py`): a night hosted to its end, the app QUIT, relaunched —
+the archive held the standings and the regenerated report (50% answers right ·
+100% tables answering). Versions 1.9.29 / 159 / vc120 / MSIX 1.9.29.0. Next:
+Windows host toasts, the Windows app as a remote for a Mac host, PDF import.
+
 **2026-09-10ad — Live loop tick 30: the phone remote goes native.** PARITY row
 G6 had iOS ⏳ and Android ⏳ since 2026-09-03 — a host with the Tidbits app on
 their phone had to open the WEB to walk the room. iOS `LiveRemoteView` (a sheet

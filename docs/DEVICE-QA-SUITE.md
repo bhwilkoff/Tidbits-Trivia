@@ -390,6 +390,11 @@ there is no regression baseline at all.
 - Windows box: `TIDBITS_PROFILE_NAME=<name>` renames the portable profile through the Settings
   path at launch; `scratchpad/e2e_name.py` photographs Settings, parses the `profile rename`
   Diag line for the profile id and reads `players/{id}.name` back from the wire.
+- Night archive (A2.12): `TIDBITS_LIVE_NIGHTS=1` opens the archive on launch (the Mac's
+  sheet, the box's newest-night dialog); the box also has `TIDBITS_LIVE_FINISH_AT=<secs>`
+  (reveal, then END the night — the macOS twin). `scratchpad/e2e_nights.py <mac|windows>`
+  hosts a night to its end with two wire tables, QUITS the app, relaunches and photographs
+  the archive. Quitting is the point: an archive that only survives the same launch is not one.
 - Phone remote (G6, native): a HOST launched with `TIDBITS_LIVE_REMOTE_PIN=<6 digits>` pairs its
   remote at once with that PIN; iOS `TIDBITS_LIVE_REMOTE=<code>` + `_PIN` open the remote paired,
   `_VERB=reveal|next|skip|scores` at `_AT` s sends one; Android the same as `tidbits_live_remote`,

@@ -736,6 +736,16 @@ public partial class LiveCockpitView : UserControl
                 await Task.Delay(TimeSpan.FromSeconds(nextAt));
                 if (Vm is { } v) { if (!v.Host.Revealed) { await v.Reveal(); await Task.Delay(2000); } await v.Next(); }
             }
+            if (Services.LaunchHooks.LiveFinishAt is { } finishAt)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(finishAt));
+                if (Vm is { } fnv)
+                {
+                    if (!fnv.Host.Revealed) { await fnv.Reveal(); await Task.Delay(2000); }
+                    await fnv.Host.End();
+                    Services.LaunchHooks.Diag($"finish hook: archived={Tidbits.Core.Store.NightArchive.Shared.Value.Nights.Count}");
+                }
+            }
             if (Services.LaunchHooks.LiveEdit is { Length: > 0 } text)
             {
                 await Task.Delay(TimeSpan.FromSeconds(Services.LaunchHooks.LiveEditAt));

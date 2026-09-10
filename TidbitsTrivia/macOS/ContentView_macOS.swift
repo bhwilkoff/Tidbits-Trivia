@@ -403,6 +403,7 @@ struct LiveBuilderCommands {
     var previewSolo: () -> Void = {}
     var duplicateEvent: () -> Void = {}
     var refreshRepeats: () -> Void = {}
+    var showNights: () -> Void = {}
     var importQuestions: () -> Void = {}
     var importQuickQuestions: () -> Void = {}
     var importEvent: () -> Void = {}
@@ -506,6 +507,7 @@ struct TidbitsCommands: Commands {
                 .keyboardShortcut("s", modifiers: .command).disabled(live == nil)
             Button("Duplicate Event") { live?.duplicateEvent() }.disabled(live == nil)
             Button("Swap Questions the Room Has Heard") { live?.refreshRepeats() }
+            Button("Nights You've Run…") { live?.showNights() }   // A2.12 (everything-lives-in-a-menu)
                 .disabled(live?.hasQuestions != true)
             Menu("Import") {
                 Button("Event or Package…") { live?.importEvent() }

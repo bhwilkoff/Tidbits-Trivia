@@ -128,6 +128,10 @@ public sealed class LiveHostNet
     // MARK: Lifecycle
 
     /// Open a room and start streaming joins. Returns the code, or null on failure.
+    /// The venue this room was opened for — kept so a finished night can be archived
+    /// under it (A2.12); it was only ever written into the wire meta.
+    public string Venue { get; private set; } = "";
+
     public async Task<string?> Open(string name, string venue = "")
     {
         lock (_lock) _publishedMedia.Clear();
@@ -135,6 +139,7 @@ public sealed class LiveHostNet
         {
             var host = await _db.EnsureAuth();
             var code = Environment.GetEnvironmentVariable("TIDBITS_LIVE_CODE") ?? FirebaseRtdb.NewRoomCode();
+            Venue = venue;
             var meta = new LiveRoom.Meta { Host = host, CreatedAt = NowMs(), Name = name, Venue = venue, State = "lobby" };
             await _db.Put($"{LiveRoom.Path(code)}/meta", meta);
             Code = code;

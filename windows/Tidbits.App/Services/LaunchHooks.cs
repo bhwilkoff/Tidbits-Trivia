@@ -111,6 +111,12 @@ public static class LaunchHooks
     /// question's accepted list with that answer, which re-scores the room (A3.13).
     public static string? LiveFixKey => Env("TIDBITS_LIVE_FIX_KEY");
     public static double? LiveFixAt => double.TryParse(Env("TIDBITS_LIVE_FIX_AT"), out var v) ? v : null;
+    /// TIDBITS_LIVE_FINISH_AT=<secs> — reveal if needed, then END the night the way the host does
+    /// (macOS parity). Without it a two-question night on the box could never be driven to its wrap.
+    public static double? LiveFinishAt => double.TryParse(Env("TIDBITS_LIVE_FINISH_AT"), out var v) ? v : null;
+    /// TIDBITS_LIVE_NIGHTS=1 — open the newest archived night on launch (A2.12); nothing else
+    /// reaches that dialog without a click, so without this the surface is untestable on the glass.
+    public static bool LiveNights => Flag("TIDBITS_LIVE_NIGHTS");
     /// TIDBITS_LIVE_ANSWER=<text> at TIDBITS_LIVE_ANSWER_AT=<secs> (default 75) — the JOINER types and submits (3.75).
     public static string? LiveAnswer => Env("TIDBITS_LIVE_ANSWER");
     public static double LiveAnswerAt => double.TryParse(Env("TIDBITS_LIVE_ANSWER_AT"), out var v) ? v : 75;

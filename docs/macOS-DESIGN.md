@@ -145,6 +145,23 @@ Nearest-Wins (numeric — also the tie-break unit), Ordering, Wager (Stake),
 Poll/Majority. Audio round and Fastest-Finger (speed scoring) are Phase B.
 Each format reuses the existing `GameMode`/question shapes where one maps.
 
+A2.12 **The night is kept** (2026-09-10). A night used to exist only while it
+was happening: close the wrap and the final standings, the answer sheet and the
+A3.11 report were gone. A pub host runs the same room every week and is asked
+"who won last time?" — so every finished night is archived on the machine that
+ran it (no backend, nothing leaves the host). "Nights you've run" sits under the
+events in the Live sidebar, because an event is a plan and a night is a thing
+that happened. Each night keeps its date, venue, final standings and answer
+sheet; the report is RECOMPUTED from that sheet rather than stored, so an
+archived night and a live one can never disagree. From a night: print the
+results, export the answer sheet again, or forget it. Capped at 20 nights and
+600 sheet rows — an unbounded archive is a slow leak, not a feature.
+
+A2.12a **Nobody wins a night nobody scored.** A night the host never revealed
+pays no one; crowning whoever sorted first ("Table 2 won with 0") is a lie the
+host has to explain to the room. The card reads "2 teams · nobody scored" and no
+crown is drawn, on the wrap and in the archive.
+
 A2.11 **A round can be worth more** (2026-09-10). The classic "double points
 round": the builder's round bar gains a Points menu (the night's setting, 2, 3,
 5 or 10 a question) beside the Timer. A correct answer is worth the question's

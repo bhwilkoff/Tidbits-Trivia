@@ -31,6 +31,7 @@ public static class NightHostFactory
         {
             SpeedBonus = speedBonus,
             Played = Store.PlayedLog.Shared.Value,
+            Archive = Store.NightArchive.Shared.Value,   // A2.12: the night is kept when it ends
             HostPlays = hostPlays,
             HostName = string.IsNullOrWhiteSpace(hostName) ? "Host" : hostName!.Trim(),
             // Without this the editor is theatre: the host edits a question, hits

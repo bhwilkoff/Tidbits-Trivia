@@ -186,11 +186,13 @@ final class LiveNightHost {
         if let m = q.matching { p.matchKeys = m.keys; p.matchValues = shuffledValues }
         if let e = q.enumerate { p.enumTarget = e.total }
         if locked && !revealed { p.locked = true }
+        p.difficulty = q.difficulty
         if revealed {   // the learning payoff: the story and its Wikipedia source, reveal only
             let s = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
             if !s.isEmpty { p.story = s }
             let t = q.sourceTitle.trimmingCharacters(in: .whitespacesAndNewlines)
             if !t.isEmpty { p.source = LiveRoom.Source(title: t, url: q.sourceURL?.absoluteString) }
+            p.answer = Self.answerLine(q)   // the answer as a line, every format — for the wrap
         }
         return p
     }

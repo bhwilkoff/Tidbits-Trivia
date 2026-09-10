@@ -73,6 +73,14 @@ first — decodes `b64` into a blob, and plays it in a native `<audio>`/`<video>
 (AVPlayer / Media3). Nothing plays until the player taps; the host's `startedAt`
 readies the clip and positions it at the room's offset. The element survives
 `pub` re-renders (recreating it restarts the clip). `url` is never `tidbits-media:`.
+**`answer` + `difficulty` (2026-09-09).** `answer` is the correct answer as a
+LINE for every format (`answerIndex` only ever covered MCQ), published on
+reveal only; `difficulty` is the question's 1…5, always. Both additive. They
+exist so a joiner's WRAP can teach: "Tough ones you nailed" (difficulty ≥ 4,
+credited by the host's score write) and "Tidbits to remember" (the answer,
+the story, the source for what the table did not get). Every host publishes
+them; a joiner decides "nailed" from its own score, never by re-scoring.
+
 **`story` + `source` (reveal only, 2026-09-09).** The charter is learning, and
 the wire had never said where a fact came from: the Mac cockpit alone sent
 `story`; the Apple Trivia Night host, the Windows host, the web host and the

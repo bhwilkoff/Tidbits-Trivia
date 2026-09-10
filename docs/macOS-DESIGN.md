@@ -191,6 +191,18 @@ never re-deals an ordering the room is halfway through), and a clip change
 re-offers the media (Decision 060). Print/export carry the fix. Not on a board
 slide (there is no current question to edit).
 
+A3.7 **The wrap teaches** (2026-09-09). When a night ends, every joiner's
+wrap carries the learning payoff, not just a number: "Tough ones you nailed"
+(the hard questions the host credited, with "How did you know that? · Share")
+and "Tidbits to remember" (the answer, the story and the Wikipedia source for
+what the table did not get). The host publishes the answer as a line and the
+difficulty on every reveal (LIVE-ROOM-CONTRACT); a joiner decides "nailed"
+from its own score, never by re-scoring. The wrap is STICKY: the host tears
+the room down when the cockpit closes, and a wrap keyed on the live frames
+alone vanished seconds after it was read — that was every Apple joiner of a
+Mac-hosted night, which had also never learned the night ended because the
+cockpit republished the last reveal instead of an ended frame.
+
 ## §A4 — Player join & teams (serverless)
 
 A4.1 **Teams, not solo, are the unit.** Several phones join one team; the

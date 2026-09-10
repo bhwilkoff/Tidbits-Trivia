@@ -170,6 +170,16 @@ public sealed class LivePlayerClient
 
     private void ApplyMeta(FirebaseRtdb.StreamEvent ev)
     {
+        // The host writes `meta/state` ALONE when the night ends — a put at path
+        // "/state" carrying a bare string, not a Meta object. Deserializing it as
+        // Meta threw and was swallowed, so a Windows joiner never learned the night
+        // had ended from meta at all (the Apple client had the same hole).
+        if (ev.Path == "/state" && Meta is not null && ev.DataJson is not null)
+        {
+            try { Meta = Meta with { State = JsonSerializer.Deserialize<string>(ev.DataJson) ?? Meta.State }; } catch { }
+            Changed?.Invoke();
+            return;
+        }
         if (ev.DataJson is not null)
         {
             try

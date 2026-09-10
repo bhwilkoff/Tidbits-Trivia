@@ -4,10 +4,11 @@
 // changes to the main render loop; the big-screen QR points here (#/live/CODE).
 import { FirebaseNet } from './firebase.js';
 import { Identity } from './identity.js';
+import { newRecap, observe as recapObserve, finish as recapFinish, tough as recapTough, toRemember as recapRemember, howDidYouKnowText } from './liverecap.js';
 
 const S = { code: '', team: '', joined: false, joining: false, pub: null, meta: null,
             score: 0, wager: 0, blurred: false, submittedQid: null, chosen: null, error: '', local: {},
-            liveAnswered: 0, liveCorrect: 0, talliedQid: null, recorded: false };
+            liveAnswered: 0, liveCorrect: 0, talliedQid: null, recorded: false, recap: newRecap() };
 
 // Wave C: flag if the player switches tab / backgrounds mid-question before submitting.
 document.addEventListener('visibilitychange', () => {
@@ -19,6 +20,8 @@ function recordIfEnded() {
   if (!S.joined || S.recorded) return;
   if (S.meta?.state !== 'ended' && S.pub?.phase !== 'ended') return;
   S.recorded = true;
+  S.finalVenue = S.meta?.venue || '';   // the wrap outlives the room
+  recapFinish(S.recap, S.score || 0);
   Identity.recordLiveGame(S.liveCorrect, S.liveAnswered);
   Identity.recordStanding(S.meta?.venue || '', S.score || 0);   // Wave E: per-venue season standing
   captureCoplayers();   // L5 social graph: remember who you played with
@@ -121,10 +124,14 @@ async function join() {
       }
       S.meta = m; recordIfEnded(); draw();
     }));
-    unsubs.push(FirebaseNet.liveOnScore(code, (v) => { S.score = v; draw(); }));
+    unsubs.push(FirebaseNet.liveOnScore(code, (v) => {
+      if (S.recorded && !(v > 0)) return;   // the host deleting the room at the end is not a zero on the wrap (the SDK hands back 0, not null)
+      S.score = v; if (S.recorded) recapFinish(S.recap, v || 0); draw();
+    }));   // a late score at the wrap still settles the last question
     unsubs.push(FirebaseNet.liveOnPub(code, (p) => {
       if (p && p.qid !== S.pub?.qid) { S.submittedQid = null; S.chosen = null; S.local = {}; S.blurred = false; }   // Wave C: reset focus flag
       S.pub = p;
+      recapObserve(S.recap, p, S.score || 0);
       if (p && p.phase === 'reveal' && S.talliedQid !== p.qid) {   // tally MCQ accuracy at reveal
         S.talliedQid = p.qid;
         if (p.options && S.submittedQid === p.qid) { S.liveAnswered++; if (S.chosen === p.answerIndex) S.liveCorrect++; }
@@ -216,6 +223,7 @@ function draw() {
     }));
   }
   root.querySelector('#live-x')?.addEventListener('click', () => { location.hash = '#/play'; });
+  root.querySelectorAll('[data-nailed]').forEach((b) => b.addEventListener('click', () => shareNailed(Number(b.dataset.nailed))));
   root.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => pick(+b.dataset.opt)));
   root.querySelector('#live-buzz')?.addEventListener('click', buzz);
   root.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', async () => {   // L5 social graph
@@ -335,6 +343,32 @@ function joinHTML() {
 }
 
 // L5: "Add the people you played with" — the freshly-captured co-players, minus those already added.
+/** The wrap's learning payoff: tough ones nailed (with the share line), and what to remember. */
+function recapHTML() {
+  const t = recapTough(S.recap), r = recapRemember(S.recap);
+  if (!t.length && !r.length) return '';
+  const src = (e) => e.sourceTitle
+    ? (e.sourceURL ? `<a class="live-source" href="${esc(e.sourceURL)}" target="_blank" rel="noopener">Learn more on Wikipedia · ${esc(e.sourceTitle)}</a>`
+                   : `<span class="live-source">From Wikipedia · ${esc(e.sourceTitle)}</span>`) : '';
+  return `<div class="live-recap">
+    ${t.length ? `<h3>✨ Tough ones you nailed</h3>${t.map((e, i) => `<div class="live-recapcard">
+      <div class="live-recapq">${esc(e.prompt)}</div><div class="live-recapa">You got it: ${esc(e.answer || '')}</div>
+      <button class="live-recapshare" data-nailed="${i}">How did you know that? · Share</button></div>`).join('')}` : ''}
+    ${r.length ? `<h3>🧠 Tidbits to remember</h3>${r.map((e) => `<div class="live-recapcard">
+      <div class="live-recapq">${esc(e.prompt)}</div><div class="live-recapa">Answer: ${esc(e.answer || '')}</div>
+      ${e.story ? `<div class="live-recapstory">${esc(e.story)}</div>` : ''}${src(e)}</div>`).join('')}` : ''}
+  </div>`;
+}
+
+async function shareNailed(i) {
+  const e = recapTough(S.recap)[i]; if (!e) return;
+  const text = howDidYouKnowText(e);
+  try {
+    if (navigator.share) await navigator.share({ text });
+    else { await navigator.clipboard.writeText(text); S.remoteNote = 'Copied — paste it to a friend.'; draw(); }
+  } catch { /* the user dismissed the sheet */ }
+}
+
 function coplayersHTML() {
   const co = recentCoplayers().slice(0, 12);
   if (!co.length) return '';
@@ -357,13 +391,16 @@ function playHTML() {
       <button id="live-x" class="live-x" aria-label="Leave">✕</button>
     </div>`;
 
-  if (!p || (S.meta && S.meta.state === 'lobby')) {
+  if (!S.recorded && (!p || (S.meta && S.meta.state === 'lobby'))) {   // a torn-down room after the wrap is not a lobby
     return `<div class="live-play">${head}<div class="live-center"><div class="live-badge">YOU'RE IN</div>
       <h2>Waiting for the host to start…</h2><p class="live-sub">Keep this open — questions appear here.</p></div></div>`;
   }
-  if (p.phase === 'ended' || (S.meta && S.meta.state === 'ended')) {
+  // S.recorded is STICKY: the host tears the room down when it closes the cockpit,
+  // and a wrap keyed on the live frames alone vanished seconds after it was read.
+  if (S.recorded || (p && p.phase === 'ended') || (S.meta && S.meta.state === 'ended')) {
     return `<div class="live-play">${head}<div class="live-center"><div class="live-badge">THAT'S A WRAP</div>
-      <h2>Final score: ${S.score}</h2><p class="live-sub">Thanks for playing. ${esc(S.meta?.venue || '')}</p>
+      <h2>Final score: ${S.score}</h2><p class="live-sub">Thanks for playing. ${esc(S.finalVenue ?? (S.meta?.venue || ''))}</p>
+      ${recapHTML()}
       ${coplayersHTML()}
       <button id="live-x" class="live-go">Done</button></div></div>`;
   }
@@ -645,6 +682,10 @@ function injectStyles() {
   .live-chips{font-weight:800;color:#231E1A;margin:6px 0}
   .live-addrow{display:flex;gap:8px;align-items:center}.live-addrow .live-in{margin:0}.live-addrow .live-go{width:auto;margin:0;padding:12px 18px}
   .live-source{display:block;margin-top:10px;text-align:center;font-weight:800;color:#0047FF;text-decoration:none}
+  .live-recap{width:100%;max-width:560px;text-align:left;margin:14px auto 0}.live-recap h3{margin:14px 0 8px;font-size:1rem;font-weight:900;color:#231E1A}
+  .live-recapcard{background:#fff;border:2px solid #231E1A;border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:3px 3px 0 #231E1A}
+  .live-recapq{font-weight:800;color:#231E1A}.live-recapa{margin-top:4px;color:#8a8078;font-weight:700}.live-recapstory{margin-top:6px;color:#4a443f;font-size:.92rem}
+  .live-recap .live-source{text-align:left}.live-recapshare{margin-top:8px;background:none;border:0;padding:0;color:#0047FF;font-weight:800;cursor:pointer;font-size:.92rem}
   .live-note{margin-top:18px;text-align:center;font-weight:800;color:#8a8078}
   .live-note.ok{color:#2f9e6f}.live-note.miss{color:#c0392b}
   .live-center{text-align:center;padding:40px 16px}`;

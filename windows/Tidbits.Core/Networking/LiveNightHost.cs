@@ -842,6 +842,8 @@ public sealed class LiveNightHost : ObservableObject
             // Windows host had published neither — only its own projector showed the story.
             Story = Revealed && !string.IsNullOrWhiteSpace(q.Explanation) ? q.Explanation.Trim() : null,
             Source = Revealed && !string.IsNullOrWhiteSpace(q.SourceTitle) ? new LiveRoom.Source { Title = q.SourceTitle.Trim(), Url = q.SourceUrl } : null,
+            Answer = Revealed ? LiveScoring.AnswerLine(q) : null,   // the answer as a line, every format — for the wrap
+            Difficulty = q.Difficulty,
             Numeric = q.Closest is { } c ? new LiveRoom.Numeric { Min = c.Min, Max = c.Max, Step = c.Step, Unit = c.Unit } : null,
             OrderItems = q.Ordering is not null ? _shuffledOrder : null,
             MatchKeys = q.Matching?.Keys,

@@ -119,6 +119,10 @@ public static class LiveRoom
         /// The charter, on the wire: the Wikipedia article the fact came from — title
         /// + link, published ONLY on reveal beside `story`. Mirrors Swift `Pub.source`.
         [JsonPropertyName("source")] public Source? Source { get; init; }
+        /// The wrap recap (2026-09-09): the answer as a LINE for every format, reveal
+        /// only; and the difficulty (1…5), always — mirrors Swift `Pub.answer/difficulty`.
+        [JsonPropertyName("answer")] public string? Answer { get; init; }
+        [JsonPropertyName("difficulty")] public int? Difficulty { get; init; }
     }
 
     public sealed record Source

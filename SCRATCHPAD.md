@@ -62,9 +62,9 @@ in both directions (see the last paragraph).
 7. ~~**Per-question timer & points overrides**~~ — DONE 2026-09-09 (A2.8 /
    3.59), in the file contract too.
 8. ~~**Per-question host note**~~ — DONE 2026-09-09 (A2.9 / 3.60).
-9. **"How did you know that?"** — macOS solo results DONE 2026-09-09; the
-   live-night wrap on every joiner is still open (needs an additive
-   `pub.difficulty` and a per-question record on each joiner). S/M.
+9. ~~**"How did you know that?"**~~ — macOS solo results DONE 2026-09-09; the
+   live-night wrap DONE 2026-09-09 on web/iPhone/Apple TV/Mac joiner (A3.7);
+   Android + Windows joiners ⏳ tick 17.
 10. **Answer-level data export** (standings only today). S.
 11. **Final-wager tie-break** (both partial). M.
 12. **Drag-to-reorder on Windows** (up/down buttons). S.
@@ -2283,3 +2283,29 @@ on a results screen listing four tough ones with the share line.
 The Windows box: the same note under the builder row and in the cockpit bubble (Windows keeps its note bubbles above the prompt with the round note; the Mac keeps them below — same verb, each shell's idiom). A harness lesson on the way: a 30 s screenshot round-trip taken BEFORE reading the wire clock pushed the read past a 120 s timer; read the clock first. Versions 1.9.13 / 143 / vc104 / MSIX 1.9.13.0. Next:
 the live-night "tough ones you nailed" wrap across every joiner (pub.difficulty
 additive + per-question record), then punch list 10 (answer-level export).
+
+**2026-09-09p — Live loop tick 16: the wrap teaches.** Punch list 9, the
+live half. Wire: `pub.answer` (a line for every format, reveal only) and
+`pub.difficulty` (always), additive, from all five hosts (Mac cockpit, Apple
+night host, Windows, web, Android). Joiners: `LiveRecapBook` (Core Swift,
+3 tests) and `js/liverecap.js` (pure, node-checked) record each revealed
+question with the score before/after; "nailed" is the host's credit, never a
+re-score. `LiveRecapView` (Core SwiftUI) on the iPhone, the Apple TV (plain
+source line, no browser) and the Mac joiner; `recapHTML()` on the web with
+the Web Share / clipboard "How did you know that?". **Four real bugs found by
+driving it on the bench:** (1) the Apple AND Windows joiners ignored the
+`meta/state` patch (a bare string at path `/state`, not a Meta object) — an
+Apple joiner of a Mac-hosted night never learned the night had ended; (2) the
+Mac cockpit republished the last REVEAL on finish instead of an ended frame;
+(3) an unanswered Name-It read "Correct!" on iOS/tvOS (`nil == nil`); (4) the
+wrap vanished when the host closed the cockpit (the room is deleted) — now
+sticky on Apple + web, the score and venue kept, the SDK's post-delete 0
+ignored. Harness lessons: the headless profile's service worker served last
+week's live.js (purge it), the local http.server had died (HTTP 000), the
+TV was asleep (wake it). **Verified on the glass** (`scratchpad/e2e_wrap.py`):
+real web (Tough ones you nailed + share line), real iPhone 12 and real Apple
+TV (Tidbits to remember with answer, story, source) — each photographed while
+the room was up AND after the host tore it down. Nits left: the web wrap header shows "points" without its number; the TV card body was dim (brightened, re-photograph next tick). Versions
+1.9.14 / 144 / vc105 / MSIX 1.9.14.0. Next: tick 17 = the same wrap on the
+Android and Windows joiners (+ the Windows meta fix is already in), then
+punch list 10 (answer-level export).

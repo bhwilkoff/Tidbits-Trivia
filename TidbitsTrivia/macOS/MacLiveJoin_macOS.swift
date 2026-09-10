@@ -144,7 +144,21 @@ struct MacLiveJoinView_macOS: View {
             .padding(20)
 
             Spacer(minLength: 0)
-            if let pub = client.pub {
+            if client.ended || client.meta?.state == "ended" || client.pub?.phase == LiveRoom.Phase.ended {
+                // The Mac joiner had no wrap at all: an ended frame drew as a question
+                // with no words. Now the same wrap as every other joiner.
+                ScrollView {
+                    VStack(spacing: 14) {
+                        Text("THAT'S A WRAP").font(Tidbits.TypeRamp.l5).foregroundStyle(.white)
+                            .padding(.horizontal, 12).padding(.vertical, 5).background(Capsule().fill(Tidbits.Palette.coral))
+                        Text("Final score: \(client.score)").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                        LiveRecapView(book: client.recap).frame(maxWidth: 640)
+                        Button("Done") { Task { await client.leave(); onClose() } }
+                            .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral, textColor: .white, prominent: true))
+                    }
+                    .padding(20)
+                }
+            } else if let pub = client.pub {
                 question(pub)
             } else {
                 VStack(spacing: 10) {

@@ -398,6 +398,9 @@ object FirebaseNet {
         /** Decision 060: the clip attached to this question, OFFERED to every joiner.
          *  Mirrors Swift `Pub.media`; null on a question without one. */
         val media: LiveMedia? = null,
+        /** The wrap recap: the answer as a line (reveal only) and the difficulty (always). Mirrors Swift `Pub.answer/difficulty`. */
+        val answer: String? = null,
+        val difficulty: Int? = null,
         /** Decision 060 (pictures): the full picture as a room node; `imageUrl` is
          *  then a small fallback. Mirrors Swift `Pub.picture`. */
         val picture: LiveMedia? = null,
@@ -518,6 +521,8 @@ object FirebaseNet {
             enumTarget = snap.child("enumTarget").getValue(Long::class.java)?.toInt(),
             locked = snap.child("locked").getValue(Boolean::class.java) ?: false,
             story = snap.child("story").getValue(String::class.java),
+            answer = snap.child("answer").getValue(String::class.java),
+            difficulty = snap.child("difficulty").getValue(Long::class.java)?.toInt(),
             deadline = snap.child("deadline").getValue(Long::class.java),
             wager = snap.child("wager").getValue(Boolean::class.java) ?: false,
             buzz = snap.child("buzz").getValue(Boolean::class.java) ?: false,

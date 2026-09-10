@@ -78,6 +78,13 @@ enum LiveRoom {
         /// joiner and both projectors can say "learn more". nil before reveal and
         /// on a question with no source.
         var source: Source? = nil
+        /// The wrap recap (2026-09-09): the answer as a LINE for every format, so a
+        /// joiner can say what the right answer was to a question it got wrong —
+        /// `answerIndex` only ever covered MCQ. Published ONLY on reveal.
+        var answer: String? = nil
+        /// The question's difficulty (1…5), always published, so a joiner can tell
+        /// "tough ones you nailed" from the rest at the wrap. nil from an older host.
+        var difficulty: Int? = nil
     }
 
     nonisolated struct Source: Codable, Equatable {

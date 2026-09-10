@@ -364,6 +364,12 @@ there is no regression baseline at all.
   `TIDBITS_LIVE_IMPORT_FILE=<C:\…\night.json> TIDBITS_LIVE_REFRESH=1` does the
   same at 20 s (window maximised, rounds scrolled into view). Host the same file first so the log has something to name
   (`scratchpad/e2e_repeats.py`).
+- Mac host: `TIDBITS_LIVE_FINISH_AT=<secs>` ends the night the way the host
+  does (standings; `meta.state` = ended, an ended pub); `TIDBITS_LIVE_AUTOCLOSE`
+  then tears the room down. `scratchpad/e2e_wrap.py` photographs every joiner
+  at both moments — a wrap has to survive the second. Before a web run: purge
+  the headless profile's service worker (it serves last week's `live.js`), and
+  check `curl http://127.0.0.1:8080/js/live.js` — the local server dies quietly.
 - Windows box: `TIDBITS_LIVE_TIEBREAK=1` opens the Break tie dialog 3 s after
   the `TIDBITS_LIVE_ACCEPT_ALL` ruling (needs two tied teams on the wire).
   `scratchpad/e2e_overrides.py` writes a night with `questionTimers` /

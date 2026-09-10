@@ -120,6 +120,8 @@ struct TVLivePlayerView: View {
     @ViewBuilder private var content: some View {
         if !client.joined {
             connecting
+        } else if client.ended {
+            ended
         } else if let p = client.pub, p.phase != LiveRoom.Phase.ended, client.meta?.state != "ended" {
             VStack(spacing: 0) { header; ScrollView { questionView(p).padding(90) } }
         } else if client.meta?.state == "ended" || client.pub?.phase == LiveRoom.Phase.ended {
@@ -172,10 +174,11 @@ struct TVLivePlayerView: View {
             Text("THAT'S A WRAP").font(.system(size: 31, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.bg)
                 .padding(.horizontal, 24).padding(.vertical, 10).background(Capsule().fill(Tidbits.Palette.coral))
             Text("Final score: \(client.score)").font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
+            ScrollView { LiveRecapView(book: client.recap, tenFoot: true).frame(maxWidth: 1100) }
             Button("Done") { Task { await client.leave(); onClose() } }
                 .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
         }
-        .padding(90)
+        .padding(60)
     }
 
     @ViewBuilder private func questionView(_ p: LiveRoom.Pub) -> some View {
@@ -323,7 +326,9 @@ struct TVLivePlayerView: View {
                : client.hasAnswered ? ("Buzzed — wait for the host.", Tidbits.Palette.mint)
                : ("First to buzz answers out loud.", TVTheme.textSoft))
             : revealed
-            ? (client.chosen == p.answerIndex ? ("Correct!", Tidbits.Palette.mint) : client.chosen == nil ? ("No answer submitted.", TVTheme.textSoft) : ("Not this time.", Tidbits.Palette.coral))
+            ? (p.options == nil   // host-scored formats: nil == nil read as "Correct!" on an unanswered Name-It
+               ? (client.hasAnswered ? ("Answer sent — the host scores it.", Tidbits.Palette.mint) : ("No answer submitted.", TVTheme.textSoft))
+               : client.chosen == p.answerIndex ? ("Correct!", Tidbits.Palette.mint) : client.chosen == nil ? ("No answer submitted.", TVTheme.textSoft) : ("Not this time.", Tidbits.Palette.coral))
             : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint)
                : p.locked == true ? ("Answers locked — pencils down!", Tidbits.Palette.coral) : ("Choose your answer with the remote.", TVTheme.textSoft))
         Text(note.0).font(.system(size: 31, weight: .bold, design: .rounded)).foregroundStyle(note.1).padding(.top, 8)

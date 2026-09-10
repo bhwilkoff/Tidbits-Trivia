@@ -149,7 +149,9 @@ struct LiveJoinView: View {
             header
             ScrollView {
                 VStack(spacing: 16) {
-                    if let p = client.pub, p.phase != LiveRoom.Phase.ended, client.meta?.state != "ended" {
+                    if client.ended {
+                        endedView
+                    } else if let p = client.pub, p.phase != LiveRoom.Phase.ended, client.meta?.state != "ended" {
                         questionView(p)
                     } else if client.meta?.state == "ended" || client.pub?.phase == LiveRoom.Phase.ended {
                         endedView
@@ -203,6 +205,7 @@ struct LiveJoinView: View {
             Text("THAT'S A WRAP").font(Tidbits.TypeRamp.l5).foregroundStyle(.white)
                 .padding(.horizontal, 12).padding(.vertical, 5).background(Capsule().fill(Tidbits.Palette.coral))
             Text("Final score: \(client.score)").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            LiveRecapView(book: client.recap)   // the learning payoff, before the social one
             if !client.coplayers.isEmpty { coplayersView }
             Button("Done") { Task { await client.leave(); dismiss() } }
                 .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white)).padding(.top, 8)
@@ -426,7 +429,9 @@ struct LiveJoinView: View {
                : client.hasAnswered ? ("Buzzed — wait for the host.", Tidbits.Palette.mint)
                : ("First to buzz answers out loud.", Tidbits.Palette.inkSoft))
             : revealed
-            ? (client.chosen == p.answerIndex ? ("Correct!", Tidbits.Palette.mint) : client.chosen == nil ? ("No answer submitted.", Tidbits.Palette.inkSoft) : ("Not this time.", .red))
+            ? (p.options == nil   // a typed / numeric / ordered answer is scored by the HOST — nil == nil read as "Correct!" on an unanswered Name-It
+               ? (client.hasAnswered ? ("Answer sent — the host scores it.", Tidbits.Palette.mint) : ("No answer submitted.", Tidbits.Palette.inkSoft))
+               : client.chosen == p.answerIndex ? ("Correct!", Tidbits.Palette.mint) : client.chosen == nil ? ("No answer submitted.", Tidbits.Palette.inkSoft) : ("Not this time.", .red))
             : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint)
                : p.locked == true ? ("Answers locked — pencils down!", Tidbits.Palette.coral) : ("Tap your answer.", Tidbits.Palette.inkSoft))
         Text(note.0).font(Tidbits.TypeRamp.l4).foregroundStyle(note.1).frame(maxWidth: .infinity).padding(.top, 6)

@@ -383,7 +383,10 @@ final class LiveHostSession {
                     remaining: b.remaining.count,
                     points: b.pointsRemaining))
         }
-        guard let q = current else {
+        // A finished night publishes an ENDED frame, the way the Apple night host
+        // does. It used to republish the last reveal, so a joiner's wrap hung on
+        // `meta.state` alone.
+        guard let q = current, !finished else {
             return LiveRoom.Pub(round: roundNumber, roundTitle: roundTitle, qid: "end", qNum: 0, qTotal: 0,
                                 phase: LiveRoom.Phase.ended, prompt: "", options: nil, format: "", answerIndex: nil)
         }
@@ -413,7 +416,9 @@ final class LiveHostSession {
             // ...and where it came from. The charter is learning; the wire never said.
             let t = q.sourceTitle.trimmingCharacters(in: .whitespacesAndNewlines)
             if !t.isEmpty { p.source = LiveRoom.Source(title: t, url: q.sourceURL?.absoluteString) }
+            p.answer = LiveNightHost.answerLine(q)   // the answer as a line, every format — for the wrap
         }
+        p.difficulty = q.difficulty
         return p
     }
 }
@@ -514,6 +519,14 @@ struct LiveHostContainer_macOS: View {
             if !session.revealed { session.reveal(); try? await Task.sleep(for: .seconds(3)) }   // let the reveal scorer run
             guard let q = session.current else { return }
             await liveAcceptFromEveryone(text, q, session: session, net: net)
+        }
+        // TIDBITS_LIVE_FINISH_AT=<secs> — end the night the way the host does (the
+        // final standings; the room stays up, `meta.state` = ended). AUTOCLOSE tears
+        // the room down; a wrap has to survive both, in that order.
+        .task {
+            guard let raw = ProcessInfo.processInfo.environment["TIDBITS_LIVE_FINISH_AT"], let secs = Double(raw) else { return }
+            try? await Task.sleep(for: .seconds(secs))
+            session.finished = true
         }
         // TIDBITS_LIVE_STATE=reveal|break|standings — put the PROJECTOR into one of
         // the states only a host's clicks can reach.

@@ -22,6 +22,12 @@ final class LivePlayerClient {
     private(set) var submittedQid: String?
     private(set) var chosen: Int?
     private(set) var errorText: String?
+    /// The wrap recap: one entry per revealed question, nailed decided by the score.
+    private(set) var recap = LiveRecapBook()
+    /// The night ended — STICKY. The host tears the room down when it closes the
+    /// cockpit, and a joiner that only checked `meta`/`pub` fell back to "Waiting
+    /// for the host to start…" and lost its wrap seconds after reading it.
+    private(set) var ended = false
 
     // Live→profile bridge: tally MCQ accuracy across the night, then feed the portable
     // profile once when the game ends (a live night keeps your streak + counts).
@@ -94,7 +100,7 @@ final class LivePlayerClient {
     func leave() async {
         tasks.forEach { $0.cancel() }; tasks = []
         if joined, let uid { try? await db.delete("\(LiveRoom.path(code))/teams/\(uid)") }
-        joined = false; pub = nil; meta = nil; score = 0; code = ""; submittedQid = nil; chosen = nil
+        joined = false; pub = nil; meta = nil; score = 0; code = ""; submittedQid = nil; chosen = nil; recap = LiveRecapBook(); ended = false; recordedEnd = false
     }
 
     private func watch(_ code: String, uid: String) {
@@ -123,6 +129,7 @@ final class LivePlayerClient {
         guard let d = ev.dataJSON, let p = try? JSONDecoder().decode(LiveRoom.Pub.self, from: d) else { pub = nil; return }
         if p.qid != pub?.qid { submittedQid = nil; chosen = nil; blurred = false }   // Wave C: reset the focus flag for the new question
         pub = p
+        recap.observe(p, score: score)
         // Tally MCQ accuracy once per question, at reveal (answerIndex is present then).
         if p.phase == LiveRoom.Phase.reveal, talliedQid != p.qid {
             talliedQid = p.qid
@@ -134,6 +141,16 @@ final class LivePlayerClient {
         recordIfEnded()
     }
     private func applyMeta(_ ev: FirebaseRTDB.StreamEvent) {
+        // The host writes `meta/state` ALONE when the night ends ("live" → "ended"),
+        // which the stream delivers as a put at path "/state" with a bare string —
+        // not a Meta object. Decoding only whole objects meant an Apple joiner of a
+        // night whose host never published an `ended` pub (the Mac cockpit) sat on
+        // the last reveal forever and never saw its wrap.
+        if ev.path == "/state", var m = meta {
+            if let d = ev.dataJSON, let state = try? JSONDecoder().decode(String.self, from: d) { m.state = state; meta = m }
+            recordIfEnded()
+            return
+        }
         if let d = ev.dataJSON, let m = try? JSONDecoder().decode(LiveRoom.Meta.self, from: d) {
             // F-010: a host restart on the same code is a NEW session whose
             // positional qids collide with the old one — qid-keyed submission
@@ -152,6 +169,8 @@ final class LivePlayerClient {
     private func recordIfEnded() {
         guard joined, !recordedEnd, meta?.state == "ended" || pub?.phase == LiveRoom.Phase.ended else { return }
         recordedEnd = true
+        ended = true
+        recap.finish(score: score)
         let correct = liveCorrect, answered = liveAnswered
         let venue = meta?.venue ?? "", nightScore = score
         Task {
@@ -187,7 +206,9 @@ final class LivePlayerClient {
         }
     }
     private func applyScore(_ ev: FirebaseRTDB.StreamEvent) {
-        if let d = ev.dataJSON, let v = try? JSONDecoder().decode(Int.self, from: d) { score = v } else { score = 0 }
+        if let d = ev.dataJSON, let v = try? JSONDecoder().decode(Int.self, from: d) { score = v }
+        else if !recordedEnd { score = 0 }   // the host deleting the room at the end is not a zero on the wrap
+        if recordedEnd { recap.finish(score: score) }   // a late score write at the wrap still settles the last question
     }
 
     static func nowMS() -> Int { Int(Date().timeIntervalSince1970 * 1000) }

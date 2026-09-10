@@ -43,6 +43,20 @@ authored titles on import. `LiveEvent.RoundTitles` (additive, in the file
 contract both ways) now names the round on the wire, the cockpit and the joker
 picker.
 
+**Verified on the deployed web joiner** (`scratchpad/e2e_joker_web.py`, headless
+Chrome against tidbitstrivia.com joining a Mac-hosted night): the "YOUR JOKER"
+box with a native `<select>` offering "Round 2 — Movies"; picking it turned the
+label into "YOUR JOKER · Round 2". Two things found on that glass: the option
+read "Round 2 — Round 2 — Movies" (every joiner prefixed a number onto a title
+the host had numbered — `LiveJoker.label` now makes the wire title
+display-ready once, Swift + C#, and every joiner shows it verbatim), and the
+first rerun graded the PREVIOUS run's page (`webdrive-page-survives-between-runs`
+— clear `/tmp/tidbits-cdp-profile` first). The Windows re-run after the title
+fix: "Round 2 — Movies" on the wire, 3 vs 2, no findings; the cockpit badge now
+sits UNDER the team name. CI: the first push's Apple run failed on my own
+`["", "x"]` expectation (369 tests ran — the suite runs in CI as intended);
+fixed in the second push.
+
 **Harness lesson:** the Mac `TIDBITS_LIVE_FINISH_AT` ends WITHOUT a reveal, so
 the last question is never scored by it — every prior night harness only ever
 scored questions the NEXT hook revealed. Reveal the last one with

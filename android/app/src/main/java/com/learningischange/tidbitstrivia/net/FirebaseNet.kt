@@ -370,6 +370,8 @@ object FirebaseNet {
     // exactly — the same keys, so a Mac host reaches Apple, web, AND Android players.
 
     data class LiveNumeric(val min: Double, val max: Double, val step: Double, val unit: String)
+    /** A2.14: one round a joker can be played on, as the host lists it (display-ready title). */
+    data class JokerRound(val index: Int, val title: String)
     data class LivePub(
         val round: Int, val roundTitle: String, val qid: String, val qNum: Int, val qTotal: Int,
         val phase: String, val prompt: String, val options: List<String>?, val format: String,
@@ -382,6 +384,7 @@ object FirebaseNet {
         val story: String? = null,   // Wave A: the story behind the answer (reveal only)
         val deadline: Long? = null,  // Wave A: epoch-ms countdown deadline (question phase)
         val wager: Boolean = false,  // Wave A: wager question — the joiner shows a stake input
+        val jokerRounds: List<JokerRound>? = null,  // A2.14: the rounds a table can still play its joker on
         /** G1: a BUZZ question — one big BUZZ button instead of the answer UI, and
          *  the FIRST buzz the SERVER sees wins. Mirrors Swift `Pub.buzz`. */
         val buzz: Boolean = false,
@@ -463,6 +466,17 @@ object FirebaseNet {
     /** Submit an MCQ answer (host reveals + scores). */
     suspend fun liveSubmit(code: String, qid: String, choice: Int) {
         liveSubmitAnswer(code, qid, mapOf("choice" to choice.toLong()))
+    }
+
+    /** A2.14: play (or move) this table's joker — the round it doubles. Owned by the table
+     *  like its answers; the host locks it when that round starts. */
+    suspend fun liveJoker(code: String, round: Int) {
+        val me = uid ?: return
+        db.getReference("live/$code/jokers/$me").setValue(mapOf("round" to round.toLong(), "ts" to System.currentTimeMillis())).await()
+    }
+    suspend fun liveJokerGet(code: String): Int? {
+        val me = uid ?: return null
+        return db.getReference("live/$code/jokers/$me/round").get().await().getValue(Long::class.java)?.toInt()
     }
 
     /** Submit any answer shape (number/text/order/pairs/list) — see LiveAnswer. */
@@ -548,6 +562,10 @@ object FirebaseNet {
             poll = snap.child("poll").getValue(Boolean::class.java) ?: false,
             deadline = snap.child("deadline").getValue(Long::class.java),
             wager = snap.child("wager").getValue(Boolean::class.java) ?: false,
+            jokerRounds = snap.child("jokerRounds").takeIf { it.exists() }?.children?.mapNotNull { r ->
+                val idx = r.child("index").getValue(Long::class.java)?.toInt() ?: return@mapNotNull null
+                JokerRound(idx, r.child("title").getValue(String::class.java) ?: "Round ${idx + 1}")
+            },
             buzz = snap.child("buzz").getValue(Boolean::class.java) ?: false,
             // G4/G5 were in the data class but never PARSED, so an Android joiner
             // never saw the first-letter rule or the category board — the two

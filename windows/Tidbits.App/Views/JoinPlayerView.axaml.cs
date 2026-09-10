@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel;
@@ -293,6 +294,40 @@ public partial class JoinPlayerView : UserControl
     private System.Collections.Generic.List<int> _pairs = new();
     private readonly System.Collections.Generic.List<string> _named = new();
 
+    /// A2.14: the joker — a ComboBox of the rounds still ahead (FluentAvalonia first);
+    /// once the pick's round has begun, a quiet line. Nothing when there is nothing to play.
+    private void BuildJoker(LivePlayerClient c, LiveRoom.Pub p)
+    {
+        var rounds = (p.JokerRounds ?? Array.Empty<LiveRoom.JokerRound>()).ToList();
+        var cur = c.JokerRound;
+        if (cur is int played && !rounds.Any(r => r.Index == played))
+        {
+            OptionsPanel.Children.Add(new TextBlock
+            {
+                Text = $"Your joker: played on Round {played + 1} \u2014 every point there counts double.",
+                Opacity = 0.7, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
+            });
+            return;
+        }
+        if (rounds.Count == 0) return;
+        var box = new StackPanel { Spacing = 4, Margin = new Thickness(0, 0, 0, 10) };
+        box.Children.Add(new TextBlock { Text = cur is int r0 ? $"YOUR JOKER \u00b7 ROUND {r0 + 1}" : "YOUR JOKER", FontWeight = FontWeight.Black, FontSize = 11, Foreground = Avalonia.Media.Brush.Parse("#FF5C35") });
+        var pick = new ComboBox
+        {
+            ItemsSource = new[] { "Pick a round to double\u2026" }.Concat(rounds.Select(r => r.Title)).ToList(),
+            SelectedIndex = cur is int r1 ? rounds.FindIndex(r => r.Index == r1) + 1 : 0,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+        pick.SelectionChanged += async (_, _) =>
+        {
+            var i = pick.SelectedIndex - 1;
+            if (i >= 0 && i < rounds.Count && rounds[i].Index != c.JokerRound) await c.PlayJoker(rounds[i].Index);
+        };
+        box.Children.Add(pick);
+        box.Children.Add(new TextBlock { Text = "Every point your table scores in that round counts double. Pick before it starts.", FontSize = 12, Opacity = 0.7, TextWrapping = TextWrapping.Wrap });
+        OptionsPanel.Children.Add(box);
+    }
+
     private void RebuildOptions()
     {
         var c = _vm?.Client;
@@ -301,10 +336,11 @@ public partial class JoinPlayerView : UserControl
         bool reveal = p.Phase == LiveRoom.Phase.Reveal;
         bool answered = c.HasAnswered;
         if (p.Qid != _qid) { _qid = p.Qid; _typed = ""; _number = null; _order = new(); _pairs = new(); _named.Clear(); }
-        var key = $"{p.Qid}|{p.Phase}|{answered}|{p.Locked == true}|{p.Wager == true}|{c.Score}";
+        var key = $"{p.Qid}|{p.Phase}|{answered}|{p.Locked == true}|{p.Wager == true}|{c.Score}|{p.JokerRounds?.Count ?? 0}|{c.JokerRound}";
         if (key == _answerKey) return;
         _answerKey = key;
         OptionsPanel.Children.Clear();
+        BuildJoker(c, p);   // A2.14: above every answer shape
         if (p.Options is not { } opts)
         {
             // Every other format: typed, closest-number, ordering, matching, name-as-many.

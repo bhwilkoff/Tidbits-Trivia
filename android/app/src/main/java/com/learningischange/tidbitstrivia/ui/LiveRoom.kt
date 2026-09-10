@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.FilterChip
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -71,6 +73,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
     var meta by remember { mutableStateOf<FirebaseNet.LiveMeta?>(null) }
     var score by remember { mutableStateOf(0) }
     var wager by remember { mutableStateOf(0) }   // Wave A: the player's stake for a wager question
+    var jokerRound by remember { mutableStateOf<Int?>(null) }   // A2.14: the round this table's joker is on
     var blurred by remember { mutableStateOf(false) }   // Wave C: left the app mid-question (soft cheat signal)
     var joined by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -87,6 +90,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
             try {
                 FirebaseNet.liveJoin(code, team)
                 joined = true
+                jokerRound = runCatching { FirebaseNet.liveJokerGet(code) }.getOrNull()   // A2.14: a reload keeps the pick
                 unsubs += FirebaseNet.liveOnMeta(code) {
                     // F-010: a host restart on the same code is a new session whose
                     // positional qids collide — reset qid-keyed submission state.
@@ -289,6 +293,13 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     WagerInput(score, wager) { wager = it }
                     Spacer(Modifier.height(12.dp))
                 }
+                JokerInput(p.jokerRounds ?: emptyList(), jokerRound) { r ->   // A2.14: the joker
+                    val before = jokerRound; jokerRound = r
+                    scope.launch {
+                        try { FirebaseNet.liveJoker(code, r) }
+                        catch (e: Exception) { jokerRound = before; error = "Joker didn't send — try again." }
+                    }
+                }
                 val locked = revealed || submittedQid == p.qid || p.locked
                 when {
                     // G1: on a BUZZ round the whole answer UI is ONE button, and the
@@ -392,6 +403,33 @@ private fun Countdown(deadlineMs: Long, skewMs: Long = 0) {   // Wave A: ticks t
     val txt = if (secs >= 60) "%d:%02d".format(secs / 60, secs % 60) else "${secs}s"
     Text(txt, fontSize = 30.sp, fontWeight = FontWeight.Black,
         color = if (secs <= 5) Pops.coral else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+}
+
+/** A2.14: the joker — ONE round of the night this table doubles, named before it starts.
+ *  A row of chips (M3 first) while the host offers rounds; a quiet line once the pick's
+ *  round has begun. Nothing at all when there is nothing to play. */
+@Composable
+private fun JokerInput(rounds: List<FirebaseNet.JokerRound>, current: Int?, onPick: (Int) -> Unit) {
+    val played = current != null && rounds.none { it.index == current }
+    if (played) {
+        Text("Your joker: played on Round ${current!! + 1} — every point there counts double.",
+            fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+        Spacer(Modifier.height(12.dp))
+        return
+    }
+    if (rounds.isEmpty()) return
+    Column(Modifier.fillMaxWidth()
+        .background(Pops.yellow.copy(alpha = 0.25f), RoundedCornerShape(12.dp)).padding(12.dp)) {
+        Text(if (current != null) "YOUR JOKER · ROUND ${current + 1}" else "YOUR JOKER", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Pops.coral)
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            rounds.forEach { r ->
+                FilterChip(selected = current == r.index, onClick = { onPick(r.index) }, label = { Text(r.title) })
+            }
+        }
+        Text("Every point your table scores in that round counts double. Pick before it starts.",
+            fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+    }
+    Spacer(Modifier.height(12.dp))
 }
 
 @Composable

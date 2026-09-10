@@ -210,6 +210,7 @@ struct TVLivePlayerView: View {
                 .fixedSize(horizontal: false, vertical: true)
             if let d = p.deadline, !revealed { tvCountdown(d) }              // Wave A: on-screen timer
             if p.wager == true, !revealed { tvWagerControl(max(0, client.score)) }  // Wave A: wager stake
+            tvJokerControl(p)                                                        // A2.14: the joker
             // G1: on a BUZZ round the whole answer UI is ONE button and every
             // other input must be GONE -- a player who can both buzz and answer
             // gives the host two things to adjudicate and it scores the wrong
@@ -284,6 +285,37 @@ struct TVLivePlayerView: View {
             Text(secs >= 60 ? String(format: "%d:%02d", secs / 60, secs % 60) : "\(secs)")
                 .font(.system(size: 56, weight: .black, design: .rounded)).monospacedDigit()
                 .foregroundStyle(secs <= 5 ? Tidbits.Palette.coral : .white)
+        }
+    }
+
+    /// A2.14: the joker — one focusable button per round still ahead (the remote drives
+    /// these; no Menu at ten feet). Once the pick's round has begun it is a quiet line.
+    @ViewBuilder private func tvJokerControl(_ p: LiveRoom.Pub) -> some View {
+        let rounds = p.jokerRounds ?? []
+        let cur = client.jokerRound
+        if let cur, !rounds.contains(where: { $0.index == cur }) {
+            Text("YOUR JOKER · played on Round \(cur + 1) — every point there counts double")
+                .font(.system(size: 24, weight: .semibold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                .accessibilityIdentifier("live.jokerPlayed")
+        } else if !rounds.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(cur.map { "YOUR JOKER · ROUND \($0 + 1)" } ?? "YOUR JOKER — pick a round to double")
+                    .font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                HStack(spacing: 20) {
+                    ForEach(rounds, id: \.index) { r in
+                        Button { Task { await client.playJoker(r.index) } } label: {
+                            Text(r.title).font(.system(size: 26, weight: .bold, design: .rounded))
+                                .foregroundStyle(cur == r.index ? Tidbits.Palette.ink : .white)
+                                .padding(.horizontal, 18).padding(.vertical, 10)
+                                .background(RoundedRectangle(cornerRadius: 12).fill(cur == r.index ? Tidbits.Palette.yellow : Color.white.opacity(0.12)))
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+                .accessibilityIdentifier("live.joker")
+            }
+            .padding(24).frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 16).fill(Tidbits.Palette.yellow.opacity(0.14)))
         }
     }
 

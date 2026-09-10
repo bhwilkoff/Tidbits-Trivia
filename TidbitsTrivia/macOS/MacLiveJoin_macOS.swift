@@ -172,6 +172,30 @@ struct MacLiveJoinView_macOS: View {
         .onExitCommand { Task { await client.leave(); onClose() } }
     }
 
+    /// A2.14: the joker — a Picker of the rounds still ahead (a menu is the Mac's
+    /// native pick control); once the pick's round has begun, a quiet line.
+    @ViewBuilder private func macJokerCard(_ pub: LiveRoom.Pub) -> some View {
+        let rounds = pub.jokerRounds ?? []
+        let cur = client.jokerRound
+        if let cur, !rounds.contains(where: { $0.index == cur }) {
+            Text("Your joker: played on Round \(cur + 1) — every point there counts double")
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                .accessibilityIdentifier("live.jokerPlayed")
+        } else if !rounds.isEmpty {
+            HStack(spacing: 10) {
+                Text(cur.map { "YOUR JOKER · ROUND \($0 + 1)" } ?? "YOUR JOKER").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.coral)
+                Picker("", selection: Binding(get: { cur ?? -1 }, set: { v in if v >= 0 { Task { await client.playJoker(v) } } })) {
+                    Text("Pick a round to double…").tag(-1)
+                    ForEach(rounds, id: \.index) { r in Text(r.title).tag(r.index) }
+                }
+                .labelsHidden().frame(width: 260)
+                .accessibilityIdentifier("live.joker")
+            }
+            .padding(10).frame(maxWidth: 640)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.yellow.opacity(0.25)))
+        }
+    }
+
     @ViewBuilder
     private func question(_ pub: LiveRoom.Pub) -> some View {
         VStack(spacing: 16) {
@@ -188,6 +212,7 @@ struct MacLiveJoinView_macOS: View {
                 LivePictureView(picture: pub.picture, fallback: pub.imageURL, code: client.code, maxHeight: 300, cornerRadius: 16)
                     .frame(maxWidth: 640)
             }
+            macJokerCard(pub)   // A2.14: the joker
             if pub.phase == LiveRoom.Phase.reveal, pub.poll == true {   // A2.10
                 Text("Thanks for voting — the room's pick is on the big screen.").font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.mint)
             }

@@ -33,6 +33,9 @@ public sealed class LivePlayerClient
     public LiveRecapBook Recap { get; private set; } = new();
     public bool Ended { get; private set; }
     public int Wager { get; set; }
+    /// A2.14: the round this table's joker is on (0-based), or null. Read back on join so
+    /// a relaunch keeps the pick; the host locks it when that round starts.
+    public int? JokerRound { get; private set; }
     public bool Blurred { get; set; }
     public string? SubmittedQid { get; private set; }
     public int? Chosen { get; private set; }
@@ -45,6 +48,16 @@ public sealed class LivePlayerClient
     public event Action<int, int, string, int>? NightEnded;
 
     public bool HasAnswered => Pub is not null && SubmittedQid == Pub.Qid;
+
+    /// A2.14: play (or move) the joker — the round this table doubles.
+    public async Task PlayJoker(int round)
+    {
+        if (_uid is null || Code.Length == 0) return;
+        var before = JokerRound;
+        JokerRound = round; Changed?.Invoke();
+        try { await _db.Put($"{LiveRoom.Path(Code)}/jokers/{_uid}", new LiveRoom.Joker { Round = round, Ts = NowMs() }); }
+        catch { JokerRound = before; ErrorText = "Joker didn't send \u2014 try again."; Changed?.Invoke(); }
+    }
 
     private string? _uid;
     private readonly List<CancellationTokenSource> _tasks = new();
@@ -70,6 +83,7 @@ public sealed class LivePlayerClient
             await _db.Put($"{LiveRoom.Path(code)}/teams/{uid}", new LiveRoom.Team { Name = team, JoinedAt = NowMs() });
             Code = code; Joined = true; Joining = false;
             _liveAnswered = 0; _liveCorrect = 0; _talliedQid = null; _recordedEnd = false;
+            try { JokerRound = (await _db.Get<LiveRoom.Joker>($"{LiveRoom.Path(code)}/jokers/{uid}"))?.Round; } catch { JokerRound = null; }   // A2.14
             LastCode = code; LastTeam = team;
             Watch(code, uid);
             Changed?.Invoke();

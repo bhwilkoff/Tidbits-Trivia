@@ -227,6 +227,11 @@ resume its counter. Deployed and PROVEN against the live database by
 so a rule that silently loosens is a failing check rather than a quiet regression.
 Re-run it after every `firebase deploy --only database`.
 
+Every other RTDB root was audited for the same cascade mistake at the same time —
+see **`docs/DATA-SECURITY-AUDIT.md`** for the per-root table, the one duel rule it
+also closed, and an honest note on what rules cannot fix (a self-scored duel or
+Quick Match must put the answers on the device; only a live event is host-scored).
+
 ## Verification
 
 `FirebaseRTDB` was proven end-to-end against the **live** project (swiftc

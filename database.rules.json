@@ -135,7 +135,7 @@
     },
     "duels": {
       "$id": {
-        ".read": "auth != null",
+        ".read": "auth != null && (data.child('createdBy').val() === auth.uid || data.child('challenged').val() === auth.uid)",
         ".write": "auth != null && !data.exists()",
         "players": {
           "$uid": {

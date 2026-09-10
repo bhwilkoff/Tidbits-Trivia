@@ -87,6 +87,42 @@ def main() -> int:
         print(f"{'PASS' if ok else 'FAIL'}  {what:44s} expected={'allow' if expected else 'DENY':5s} got={'allow' if actual else 'DENY'}")
 
     mr.http('DELETE', f'{mr.DB}/live/{code}.json?auth={host_tok}')
+
+    # --- duels: the node carries the question set WITH its answers, so only the two
+    # named players may read it. (Both of them legitimately hold the answers — an async
+    # duel is scored on the device; there is no server to hold them back.)
+    did = 'probe' + ''.join(random.choice('abcdef0123456789') for _ in range(12))
+    c_tok, c_uid = anon()          # challenger
+    t_tok, t_uid = anon()          # the friend they challenged
+    s_tok, _ = anon()              # a signed-in stranger
+    mr.http('PUT', f'{mr.DB}/duels/{did}.json?auth={c_tok}', {
+        'createdBy': c_uid, 'challenged': t_uid, 'createdAt': now,
+        'questions': [{'p': 'Q?', 'o': ['a', 'b', 'c', 'd'], 'c': 2, 'e': ''}],
+        'players': {c_uid: {'name': 'Challenger', 'done': False, 'score': 0}},
+    })
+
+    def duel_allowed(method, path, tok, body=None):
+        try:
+            mr.http(method, f'{mr.DB}/duels/{did}{path}.json?auth={tok}', body)
+            return True
+        except urllib.error.HTTPError as e:
+            if e.code in (401, 403):
+                return False
+            raise
+
+    duel_checks = [
+        ("a stranger reads someone else's duel",   False, duel_allowed('GET', '', s_tok)),
+        ("the challenger reads their duel",        True,  duel_allowed('GET', '', c_tok)),
+        ("the challenged friend reads it",         True,  duel_allowed('GET', '', t_tok)),
+        ("the friend writes their own result",     True,  duel_allowed('PUT', f'/players/{t_uid}', t_tok, {'name': 'Friend', 'done': True, 'score': 3})),
+        ("a stranger writes into the duel",        False, duel_allowed('PUT', f'/players/{s_tok[:8]}', s_tok, {'name': 'X', 'done': True, 'score': 9})),
+    ]
+    for what, expected, actual in duel_checks:
+        ok = expected == actual
+        if not ok:
+            bad.append(what)
+        print(f"{'PASS' if ok else 'FAIL'}  {what:44s} expected={'allow' if expected else 'DENY':5s} got={'allow' if actual else 'DENY'}")
+
     print('\nRESULT:', 'ALL RULES BEHAVE' if not bad else f'{len(bad)} MISBEHAVING: ' + '; '.join(bad))
     return 1 if bad else 0
 

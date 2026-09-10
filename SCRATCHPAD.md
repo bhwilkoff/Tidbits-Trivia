@@ -2392,6 +2392,30 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10ai — Live loop tick 35: every other root audited for the same
+cascade.** Tick 34 closed the live-room breaches; the owner's instruction was to
+close "all such" breaches, so every RTDB root was checked for the SAME mistake —
+a container `.read` cascading over private children. **One more found and
+closed:** a `duels/$id` node carries the question set WITH `correctIndex` and was
+readable by any signed-in stranger who knew the id; it now reads only for the two
+players it names (`createdBy`, `challenged`), deployed and proven. Audited clean:
+`playersPrivate`, `pushTokens`, `dailyLog`, `entitlements` (owner-scoped),
+`emailOwners` (NO read rule at all, so addresses never leave while the rules still
+evaluate it server-side), and the deliberately public `players` / `dailyBoard` /
+`standings` / `quizzes`. `rooms/$roomId` stays readable by any signed-in player on
+purpose — the queue hands out a room id and a player must read the room before
+deciding to join, so a participant-only rule would break matchmaking. **Said
+plainly rather than papered over** (`docs/DATA-SECURITY-AUDIT.md`): the
+self-scored modes — async duel, Quick Match, shared quiz — must put the answers
+on the device because there is no server to score them; only a LIVE event is
+host-scored, and there the answer is never sent before the reveal. Rules cannot
+put an answer on a device and keep it from that device; that needs server-side
+scoring, a product decision with a running cost. `tools/rules_probe.py` extended
+to 23 checks. **Known gap, recorded:** the duel rule was proven with real
+participant tokens against the live database, but the in-app duel flow was not
+re-driven on a device — duels have never had a fleet harness or launch hook.
+No app code changed, so no version bump. Next: a duel harness, then PDF import.
+
 **2026-09-10ah — Live loop tick 34: video on every joiner, and both read
 breaches closed.** Two halves, both owner-driven.
 

@@ -372,6 +372,9 @@ there is no regression baseline at all.
   check `curl http://127.0.0.1:8080/js/live.js` — the local server dies quietly.
   `e2e_wrap.py windows,dongle` adds the box and the Android TV dongle as joiners
   (Android needs the DEBUG apk; the harness installs it).
+- Windows box: `TIDBITS_LIVE_REPORT_AT=<secs>` opens the Night report dialog after the
+  ACCEPT_ALL ruling; `scratchpad/e2e_report.py <mac|windows>` (the Mac's report is on
+  the final standings after `TIDBITS_LIVE_FINISH_AT`).
 - Both hosts: `TIDBITS_LIVE_BED=<name|path>` starts the music bed 1 s in;
   `TIDBITS_LIVE_NEXT_AT=<secs>` reveals if needed and advances; the box also has
   `TIDBITS_LIVE_PLAYCLIP_AT=<secs>`. `scratchpad/e2e_duck_wager.py <host> duck|wager`.

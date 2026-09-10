@@ -416,6 +416,8 @@ public sealed class LiveHostViewModel : ObservableObject
     public Task AcceptText(string uid) => Host.AcceptText(uid);
     public Task AcceptTextForAll(string text) => Host.AcceptTextForAll(text);
     public string AnswersCsv() => LiveExport.AnswersCsv(Host.AnswerLog);
+    /// A3.11: the night read back from the answer sheet (no backend).
+    public LiveNightReport Report => LiveNightReport.From(Host.AnswerLog, Host.Standings.Count);
     public bool HasAnswerLog => Host.AnswerLog.Count > 0;
 
     // Tie-break (3.24) — brains-only manual pick among the tied leaders.

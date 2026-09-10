@@ -32,8 +32,8 @@ enum LivePrint {
     @MainActor static func answerSheet(_ event: LiveEvent) {
         render(AnswerSheetPage(event: event), name: "\(event.name) — Answer Sheet")
     }
-    @MainActor static func results(name: String, standings: [LiveTeam]) {
-        render(ResultsPage(name: name, standings: standings), name: "\(name) — Results")
+    @MainActor static func results(name: String, standings: [LiveTeam], report: LiveNightReport? = nil) {
+        render(ResultsPage(name: name, standings: standings, report: report), name: "\(name) — Results")
     }
 
     /// US Letter at 72dpi — the page a pub actually prints on.
@@ -153,6 +153,7 @@ struct QuestionPackPage: View {
 struct ResultsPage: View {
     let name: String
     let standings: [LiveTeam]
+    var report: LiveNightReport? = nil
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(name).font(.system(size: 26, weight: .bold))
@@ -162,6 +163,16 @@ struct ResultsPage: View {
                     Text("\(i + 1). \(team.name)").font(.system(size: 14, weight: i == 0 ? .bold : .regular))
                     Spacer()
                     Text("\(team.score)").font(.system(size: 14, weight: .bold))
+                }
+            }
+            if let r = report, !r.isEmpty {   // A3.11: the night, read back
+                Text("How the night went").font(.system(size: 16, weight: .bold)).padding(.top, 8)
+                Text("\(LiveNightReport.percent(r.overallAccuracy)) of answers right · \(LiveNightReport.percent(r.participation)) of tables answering · \(r.questions.count) questions")
+                    .font(.system(size: 13))
+                if let h = r.hardest { Text("Hardest (\(LiveNightReport.percent(h.accuracy)) of \(h.answered)): \(h.prompt) — \(h.answer)").font(.system(size: 13)) }
+                if let e = r.easiest, e.qid != r.hardest?.qid { Text("Easiest (\(LiveNightReport.percent(e.accuracy)) of \(e.answered)): \(e.prompt) — \(e.answer)").font(.system(size: 13)) }
+                ForEach(r.rounds) { rs in
+                    Text("Round \(rs.round): \(LiveNightReport.percent(rs.accuracy)) right across \(rs.questions) question\(rs.questions == 1 ? "" : "s")").font(.system(size: 13))
                 }
             }
         }

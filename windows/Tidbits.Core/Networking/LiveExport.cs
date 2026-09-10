@@ -21,6 +21,27 @@ public static class LiveExport
         return sb.ToString();
     }
 
+    /// A3.11 / 3.68: the night read back, as a section of the printed results.
+    public static string NightReportSection(LiveNightReport r)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<h2>How the night went</h2><p>")
+          .Append(LiveNightReport.Percent(r.OverallAccuracy)).Append(" of answers right · ")
+          .Append(LiveNightReport.Percent(r.Participation)).Append(" of tables answering · ")
+          .Append(r.Questions.Count).Append(" questions</p>");
+        if (r.Hardest is { } h)
+            sb.Append("<p><b>Hardest</b> (").Append(LiveNightReport.Percent(h.Accuracy)).Append(" of ").Append(h.Answered).Append("): ")
+              .Append(Esc(h.Prompt)).Append(" — ").Append(Esc(h.Answer)).Append("</p>");
+        if (r.Easiest is { } e && e.Qid != r.Hardest?.Qid)
+            sb.Append("<p><b>Easiest</b> (").Append(LiveNightReport.Percent(e.Accuracy)).Append(" of ").Append(e.Answered).Append("): ")
+              .Append(Esc(e.Prompt)).Append(" — ").Append(Esc(e.Answer)).Append("</p>");
+        sb.Append("<ul>");
+        foreach (var rs in r.Rounds)
+            sb.Append("<li>Round ").Append(rs.Round).Append(": ").Append(LiveNightReport.Percent(rs.Accuracy)).Append(" right across ").Append(rs.Questions).Append(rs.Questions == 1 ? " question" : " questions").Append("</li>");
+        sb.Append("</ul>");
+        return sb.ToString();
+    }
+
     private static string Quote(string s) => $"\"{s.Replace("\"", "\"\"")}\"";
 
     /// A3.8 / 3.62: the answer sheet — round,question,prompt,answer,team,submitted,points,
@@ -53,11 +74,12 @@ public static class LiveExport
         return path;
     }
 
-    public static string StandingsHtml(IReadOnlyList<LiveHostNet.Joined> standings, string title)
+    public static string StandingsHtml(IReadOnlyList<LiveHostNet.Joined> standings, string title, LiveNightReport? report = null)
     {
         var rows = new StringBuilder();
         for (int i = 0; i < standings.Count; i++)
             rows.Append($"<tr><td>{i + 1}</td><td>{Esc(standings[i].Name)}</td><td>{standings[i].Score}</td></tr>");
+        var reportHtml = report is { IsEmpty: false } ? NightReportSection(report) : "";   // A3.11: the night, read back
         return "<!doctype html><html><head><meta charset=\"utf-8\"><title>" + Esc(title) + "</title>"
             + "<style>body{font-family:system-ui,sans-serif;margin:40px;color:#0A0A0A}"
             + "h1{color:#FF5C35}table{border-collapse:collapse;width:100%;max-width:560px}"
@@ -65,7 +87,7 @@ public static class LiveExport
             + "th{font-size:12px;text-transform:uppercase;opacity:.6}td:last-child{font-weight:800;text-align:right}"
             + "tr:first-child td{font-weight:800}</style></head><body>"
             + "<h1>" + Esc(title) + "</h1><table><tr><th>#</th><th>Team</th><th>Score</th></tr>"
-            + rows + "</table></body></html>";
+            + rows + "</table>" + reportHtml + "</body></html>";
     }
 
     /// The teams' blank answer sheet — numbered lines per round, from the PLAN alone, so a

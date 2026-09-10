@@ -1620,29 +1620,102 @@ struct LiveHostView_macOS: View {
 
     // MARK: Final standings
 
+    struct FinalRow: Identifiable { let id: String; let name: String; let score: Int; let paper: Bool }
+    /// Phone tables (bar the ones the host hid) and paper teams, best first.
+    private var finalStandings: [FinalRow] {
+        var rows: [FinalRow] = []
+        for (uid, team) in net.teams where !session.blockedTeams.contains(uid) {
+            rows.append(FinalRow(id: uid, name: team.name, score: net.scores[uid] ?? 0, paper: false))
+        }
+        for t in session.teams { rows.append(FinalRow(id: "paper:\(t.id)", name: t.name, score: t.score, paper: true)) }
+        return rows.sorted { $0.score > $1.score }
+    }
+
+    private var report: LiveNightReport {
+        LiveNightReport.from(session.answerLog, teams: net.teams.count + session.teams.count)
+    }
+
+    /// A3.11: the night read back — the questions the room found hard and easy,
+    /// each round's accuracy, how many tables were answering. From the sheet the
+    /// host already keeps; nothing leaves the Mac.
+    @ViewBuilder private var nightReport: some View {
+        let r = report
+        if !r.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("How the night went").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                HStack(spacing: 10) {
+                    reportStat(LiveNightReport.percent(r.overallAccuracy), "answers right", Tidbits.Palette.mint)
+                    reportStat(LiveNightReport.percent(r.participation), "tables answering", Tidbits.Palette.blue)
+                    reportStat("\(r.questions.count)", "questions", Tidbits.Palette.coral)
+                }
+                if let h = r.hardest {
+                    reportQuestion("Hardest", h, Tidbits.Palette.coral)
+                }
+                if let e = r.easiest, e.qid != r.hardest?.qid {
+                    reportQuestion("Easiest", e, Tidbits.Palette.mint)
+                }
+                if r.rounds.count > 1 {
+                    HStack(spacing: 8) {
+                        ForEach(r.rounds) { rs in
+                            Text("Round \(rs.round) · \(LiveNightReport.percent(rs.accuracy))")
+                                .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.ink)
+                                .padding(.horizontal, 10).padding(.vertical, 5)
+                                .background(Capsule().fill(Tidbits.Palette.surface))
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14).quietCard(fill: Tidbits.Palette.bg)
+            .accessibilityIdentifier("live.nightReport")
+        }
+    }
+    private func reportStat(_ value: String, _ label: String, _ tint: Color) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            Text(label).font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 10).fill(tint.opacity(0.18)))
+    }
+    private func reportQuestion(_ label: String, _ q: LiveNightReport.QuestionStat, _ tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("\(label.uppercased()) · \(LiveNightReport.percent(q.accuracy)) of \(q.answered) got it")
+                .font(Tidbits.TypeRamp.l6).foregroundStyle(tint)
+            Text(q.prompt).font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.ink).lineLimit(2)
+            Text("Answer: \(q.answer)").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+        }
+    }
+
     private var standings: some View {
         ScrollView {
             VStack(spacing: 16) {
                 Text("Final standings").font(.system(size: 34, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).padding(.top, 24)
                 Text(session.event.name).font(.headline).foregroundStyle(Tidbits.Palette.inkSoft)
-                ForEach(Array(session.standings.enumerated()), id: \.element.id) { i, team in
+                // The UNIFIED standings — phone tables and paper teams together, the way the
+                // projector and the CSV already had them. This list had shown paper teams
+                // only, so a night of phones ended on "No teams were scored".
+                let rows = finalStandings
+                ForEach(Array(rows.enumerated()), id: \.element.id) { i, team in
                     HStack(spacing: 12) {
                         Text("\(i + 1)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 30)
                         if i == 0 { Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow) }
                         Text(team.name).font(.title2.weight(.semibold)).foregroundStyle(Tidbits.Palette.ink)
+                        if team.paper { Text("paper").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft) }
                         Spacer()
                         Text("\(team.score)").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                     }
                     .padding(16).frame(maxWidth: .infinity)
                     .quietCard(fill: i == 0 ? Tidbits.Palette.yellow.opacity(0.35) : Tidbits.Palette.surface)
                 }
-                if session.teams.isEmpty { Text("No teams were scored this night.").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft) }
+                if rows.isEmpty { Text("No teams were scored this night.").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft) }
+                nightReport   // A3.11: how the night went, from the answer sheet
                 HStack(spacing: 14) {
                     if !session.tiedGroups.isEmpty {
                         Button("Break a tie…") { tieGroup = session.tiedGroups.first ?? []; showTieBreak = true }
                             .buttonStyle(.bordered).tint(Tidbits.Palette.yellow)
                     }
-                    Button("Print results") { LivePrint.results(name: session.event.name, standings: session.standings) }
+                    Button("Print results") { LivePrint.results(name: session.event.name, standings: finalStandings.map { LiveTeam(name: $0.name, score: $0.score) }, report: report) }
                         .buttonStyle(.bordered)
                     Button("Done", action: onClose).buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral).keyboardShortcut(.cancelAction)
                 }

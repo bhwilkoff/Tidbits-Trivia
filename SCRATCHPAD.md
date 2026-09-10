@@ -71,7 +71,9 @@ in both directions (see the last paragraph).
     is headless-tested, not driven on the box).
 13. ~~**Poll / no-answer question**~~ — DONE 2026-09-09 (A2.10 / 3.64).
 14. ~~**Music-bed auto-duck**~~ — DONE 2026-09-09 (A3.10 / 3.66).
-15. **Per-event / per-venue analytics.** L.
+15. ~~**Per-event / per-venue analytics.**~~ — DONE 2026-09-09 as A3.11, the
+    night report from the answer sheet (no backend; per-venue rollups stay
+    out of scope until a venue asks for them).
 
 Backlog rows that were wrong: §F "tie-break engine ✅" is FALSE on Windows;
 and answer-lock timer, CSV import, balance meter, SFX board, audio/video
@@ -2388,3 +2390,19 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 / MSIX 1.9.19.0. Next: punch list 15 (analytics) as a host-side "night
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
+
+**2026-09-09v — Live loop tick 22: the night reads itself back.** Punch list
+15, done the $0 way: `LiveNightReport` (Swift + C#, tests on both) from the
+answer sheet — answers right, tables answering, hardest/easiest with answers,
+per-round accuracy, polls skipped. Mac: a "How the night went" card on the
+final standings + the printed results; Windows: the Night report command
+(dialog) + the printed standings. **Found on the way:** the Mac final standings
+listed PAPER teams only (`session.standings`) — a phones-only night ended on
+"No teams were scored"; it now merges phone + paper like the projector and
+the CSV. **Verified on the glass** (`scratchpad/e2e_report.py`): the Mac's
+final standings with Table 1 (crown, 1) and Table 2 (0) and the report (50%
+right, 100% answering, hardest = the Neo question). REPORT_SCRATCH_WIN
+Versions 1.9.20 / 150 / vc111 / MSIX 1.9.20.0. The audited punch list is
+now closed (1–15). Next: a fresh audit pass — re-mine the premium backlog and
+the design docs against the code for what is still ⬜, and the stop
+condition.

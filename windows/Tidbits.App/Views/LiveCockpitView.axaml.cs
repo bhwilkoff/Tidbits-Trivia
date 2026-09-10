@@ -510,6 +510,51 @@ public partial class LiveCockpitView : UserControl
         await writer.WriteAsync(vm.StandingsCsv());
     }
 
+    /// A3.11 / 3.68: the night read back — the same numbers the Mac's final standings show.
+    private async void OnNightReport(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm) return;
+        var r = vm.Report;
+        var panel = new StackPanel { Spacing = 8, MinWidth = 380 };
+        if (r.IsEmpty)
+        {
+            panel.Children.Add(new TextBlock { Text = "Nothing to read back yet — reveal a question first.", Opacity = 0.75, TextWrapping = TextWrapping.Wrap });
+        }
+        else
+        {
+            var stats = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*") };
+            void Stat(int col, string value, string label)
+            {
+                var b = new StackPanel { Spacing = 2, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center };
+                b.Children.Add(new TextBlock { Text = value, FontSize = 22, FontWeight = FontWeight.Black, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center });
+                b.Children.Add(new TextBlock { Text = label, FontSize = 12, Opacity = 0.7, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center });
+                Grid.SetColumn(b, col); stats.Children.Add(b);
+            }
+            Stat(0, Tidbits.Core.Networking.LiveNightReport.Percent(r.OverallAccuracy), "answers right");
+            Stat(1, Tidbits.Core.Networking.LiveNightReport.Percent(r.Participation), "tables answering");
+            Stat(2, r.Questions.Count.ToString(), "questions");
+            panel.Children.Add(stats);
+            void Q(string label, Tidbits.Core.Networking.LiveNightReport.QuestionStat q, string color)
+            {
+                panel.Children.Add(new TextBlock { Text = $"{label.ToUpperInvariant()} · {Tidbits.Core.Networking.LiveNightReport.Percent(q.Accuracy)} of {q.Answered} got it", FontSize = 12, FontWeight = FontWeight.Bold, Foreground = new SolidColorBrush(Color.Parse(color)) });
+                panel.Children.Add(new TextBlock { Text = q.Prompt, TextWrapping = TextWrapping.Wrap });
+                panel.Children.Add(new TextBlock { Text = "Answer: " + q.Answer, FontSize = 12, Opacity = 0.7, TextWrapping = TextWrapping.Wrap });
+            }
+            if (r.Hardest is { } h) Q("Hardest", h, "#D64545");
+            if (r.Easiest is { } ez && ez.Qid != r.Hardest?.Qid) Q("Easiest", ez, "#1E9E6A");
+            if (r.Rounds.Count > 1)
+            {
+                var rounds = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 8 };
+                foreach (var rs in r.Rounds)
+                    rounds.Children.Add(new Border { CornerRadius = new Avalonia.CornerRadius(10), Padding = new Avalonia.Thickness(10, 4), Background = new SolidColorBrush(Color.Parse("#1F808080")),
+                        Child = new TextBlock { Text = $"Round {rs.Round} · {Tidbits.Core.Networking.LiveNightReport.Percent(rs.Accuracy)}", FontSize = 12 } });
+                panel.Children.Add(rounds);
+            }
+        }
+        var dlg = new FAContentDialog { Title = "How the night went", Content = panel, PrimaryButtonText = r.IsEmpty ? null : "Print with the standings", CloseButtonText = "Close" };
+        if (await dlg.ShowAsync() == FAContentDialogResult.Primary) OnPrintStandings(this, e);
+    }
+
     /// A3.8 / 3.62: the answer sheet — every team's submission and credit per question.
     private async void OnExportAnswers(object? sender, RoutedEventArgs e)
     {
@@ -557,7 +602,7 @@ public partial class LiveCockpitView : UserControl
     private async void OnPrintStandings(object? sender, RoutedEventArgs e)
     {
         if (Vm is not { } vm || !vm.HasStandings) return;
-        var html = Tidbits.Core.Networking.LiveExport.StandingsHtml(vm.Host.Standings, $"{vm.Host.Title} — Standings");
+        var html = Tidbits.Core.Networking.LiveExport.StandingsHtml(vm.Host.Standings, $"{vm.Host.Title} — Standings", vm.Report);   // A3.11: the printed results carry the night report
         var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"tidbits-standings-{vm.Host.Code}.html");
         try
         {
@@ -689,6 +734,11 @@ public partial class LiveCockpitView : UserControl
                 if (!vm.Host.Revealed) { await vm.Reveal(); await Task.Delay(3000); }
                 await vm.AcceptTextForAll(ruling);
                 if (Services.LaunchHooks.LiveTieBreak) { await Task.Delay(3000); OnBreakTie(this, new RoutedEventArgs()); }
+                if (Services.LaunchHooks.LiveReportAt is { } reportAt)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(reportAt));
+                    OnNightReport(this, new RoutedEventArgs());
+                }
                 if (Services.LaunchHooks.LiveExportAnswers is { Length: > 0 } sheet)
                 {
                     await Task.Delay(5000);

@@ -238,6 +238,17 @@ host never reaches for the slider mid-show. The cockpit says "ducked" beside
 the bed while it is. Same on Windows through LibVLC's Playing / EndReached
 (3.66).
 
+A3.11 **The night reads itself back** (2026-09-09; punch list 15). From the
+answer sheet the host already keeps (A3.8), with no backend and nothing
+leaving the machine: the share of answers right, the share of tables
+answering, the hardest and easiest questions (with the answer, so the host
+can read them out), and each round's accuracy. On the final standings and on
+the printed results; Windows has it as a Night report dialog and in its
+printed standings. A poll is not a question anyone got wrong, so polls are
+left out. **Found on the way:** the Mac's final standings listed paper teams
+only — a night of phones ended on "No teams were scored" — they now list
+phones and paper together like the projector and the CSV always did.
+
 ## §A4 — Player join & teams (serverless)
 
 A4.1 **Teams, not solo, are the unit.** Several phones join one team; the

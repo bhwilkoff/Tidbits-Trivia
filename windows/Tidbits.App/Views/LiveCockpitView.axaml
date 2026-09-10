@@ -279,6 +279,8 @@
                 <ui:FACommandBarButton Label="Remove team" Click="OnRemoveTeam"/>
                 <ui:FACommandBarSeparator/>
                 <ui:FACommandBarButton Label="Export standings as CSV" Click="OnExportCsv"/>
+                <ui:FACommandBarButton Label="Night report" Click="OnNightReport"
+                                       ToolTip.Tip="How the night went — the hardest and easiest questions, each round's accuracy, how many tables were answering"/>
                 <ui:FACommandBarButton Label="Export answer sheet as CSV" Click="OnExportAnswers"
                                        ToolTip.Tip="Every team's submission and credit, question by question"/>
                 <ui:FACommandBarButton Label="Print standings" Click="OnPrintStandings"/>

@@ -272,6 +272,14 @@ final class LiveNightHost {
         q.closest == nil && q.ordering == nil && q.matching == nil && q.accepted == nil && q.enumerate == nil
     }
     /// The host-facing correct answer to read out on reveal (all types).
+    /// A3.13: did an edit change what the scorer reads? A typo fix in the prompt never
+    /// re-scores; a changed key, option set, accepted list, target number, order or
+    /// pairing does.
+    static func keyDiffers(_ a: Question, _ b: Question) -> Bool {
+        a.options != b.options || a.correctIndex != b.correctIndex || a.accepted != b.accepted
+            || a.closest != b.closest || a.ordering != b.ordering || a.matching != b.matching || a.enumerate != b.enumerate
+    }
+
     static func answerLine(_ q: Question) -> String {
         if let c = q.closest { return c.formattedAnswer }
         if let acc = q.accepted { return acc.first ?? q.correctAnswer }

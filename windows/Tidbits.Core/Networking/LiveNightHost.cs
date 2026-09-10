@@ -430,13 +430,37 @@ public sealed class LiveNightHost : ObservableObject
     {
         if (Current is not { } old) return;
         var next = q with { RoundIndex = old.RoundIndex };
+        var keyFix = Revealed && LiveScoring.KeyDiffers(old, next);   // A3.13
         Questions[Index] = next;
         if (!SameList(old.Ordering, next.Ordering))
             _shuffledOrder = next.Ordering is { } o ? QueryHelpers.Shuffle(o.ToList()) : new();
         if (!SameList(old.Matching?.Values, next.Matching?.Values) || !SameList(old.Matching?.Keys, next.Matching?.Keys))
             _shuffledValues = next.Matching is { } m ? QueryHelpers.Shuffle(m.Values.ToList()) : new();
         await PublishCurrent();
+        if (keyFix) await Rescore();
         Notify();
+    }
+
+    /// A3.13: what the last key fix did to the scores, for the cockpit; cleared on the next question.
+    public string? RescoreNote { get; private set; }
+
+    /// The key was wrong and the room was already paid: take back what this question
+    /// paid (from the answer sheet), score it again under the fixed key, and say what
+    /// changed. The sheet keeps only the corrected record.
+    private async Task Rescore()
+    {
+        if (Current is not { } q) return;
+        var qid = LiveRoom.Qid(q.RoundIndex ?? 0, Index);
+        var idx = AnswerLog.FindLastIndex(r => r.Qid == qid);
+        var before = idx >= 0 ? AnswerLog[idx].Lines.ToDictionary(l => l.Uid, l => l.Points) : new Dictionary<string, int>();
+        if (idx >= 0) AnswerLog.RemoveAt(idx);
+        foreach (var kv in before.Where(kv => kv.Value != 0)) await Net.SetScore(kv.Key, Net.ScoreOf(kv.Key) - kv.Value);
+        await AutoScore();
+        var after = AnswerLog.Count > 0 && AnswerLog[^1].Qid == qid
+            ? AnswerLog[^1].Lines.ToDictionary(l => l.Uid, l => l.Points) : new Dictionary<string, int>();
+        var changed = before.Keys.Union(after.Keys).Count(u => before.GetValueOrDefault(u) != after.GetValueOrDefault(u));
+        RescoreNote = changed == 0 ? "Key fixed — nobody's score changed"
+                                   : $"Key fixed — re-scored, {changed} {(changed == 1 ? "team" : "teams")} changed";
     }
 
     private static bool SameList(IReadOnlyList<string>? a, IReadOnlyList<string>? b) =>
@@ -663,6 +687,7 @@ public sealed class LiveNightHost : ObservableObject
 
     private void PrepareQuestion()
     {
+        RescoreNote = null;
         CurrentMedia = null; MediaNote = null; MediaStartedAt = null; CurrentPicture = null;   // Decision 060: offered when in place
         if (Current is { } shown) Played?.Record(new[] { shown.Id }, Title);   // 3.56: the room heard it
         ManuallyAccepted.Clear();

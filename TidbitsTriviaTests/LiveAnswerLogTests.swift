@@ -31,3 +31,23 @@ struct LiveAnswerLogTests {
         #expect(csv.range(of: "Alpha")!.lowerBound < csv.range(of: "Zed")!.lowerBound)
     }
 }
+
+// A3.13: a key fixed after reveal re-scores; a prompt typo fix must not.
+@Suite("Live key fix")
+struct LiveKeyFixTests {
+    private func q(accepted: [String]? = ["Keanu Reeves"], prompt: String = "Who played Neo?", correctIndex: Int = 0) -> Question {
+        var q = Question(id: "q1", prompt: prompt, options: ["Keanu Reeves", "B", "C", "D"], correctIndex: correctIndex,
+                         categoryID: "film", difficulty: 4, explanation: "", sourceTitle: "", sourceURL: nil, templateID: "hand")
+        q.accepted = accepted
+        return q
+    }
+    @Test func promptEditIsNotAKeyChange() {
+        #expect(!LiveNightHost.keyDiffers(q(), q(prompt: "Who played Neo in The Matrix?")))
+        #expect(!LiveNightHost.keyDiffers(q(), q(accepted: ["Keanu Reeves"])))
+    }
+    @Test func acceptedListAndCorrectIndexAreTheKey() {
+        #expect(LiveNightHost.keyDiffers(q(), q(accepted: ["Neo"])))
+        #expect(LiveNightHost.keyDiffers(q(), q(accepted: ["Keanu Reeves", "Keanu"])))
+        #expect(LiveNightHost.keyDiffers(q(accepted: nil), q(accepted: nil, correctIndex: 1)))
+    }
+}

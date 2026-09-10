@@ -77,6 +77,9 @@
                     </Border>
                     <TextBlock IsVisible="{Binding IsPoll}" Text="Poll — the room votes, nobody scores" Classes="caption" Foreground="#FF5C35" FontWeight="Bold"/>
                     <TextBlock IsVisible="{Binding IsWagerRound}" Text="{Binding WagerLine}" Classes="caption" Foreground="#FF5C35" FontWeight="Bold" TextWrapping="Wrap"/>
+                    <!-- A3.13: a key fixed after reveal re-scores the question; say what it did. -->
+                    <TextBlock IsVisible="{Binding HasRescoreNote}" Text="{Binding RescoreNote}" Classes="caption" Foreground="#FF5C35" FontWeight="Bold" TextWrapping="Wrap"
+                               AutomationProperties.Name="Re-score result"/>
                     <TextBlock IsVisible="{Binding BedDucked}" Text="Music bed ducked under the clip" Classes="caption" Foreground="#FF5C35"/>
                     <!-- 3.60: the host's cue for THIS question (never published). -->
                     <Border IsVisible="{Binding HasQuestionNote}" Background="#220047FF" CornerRadius="8" Padding="10,7">

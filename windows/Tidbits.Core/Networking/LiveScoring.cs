@@ -8,6 +8,15 @@ namespace Tidbits.Core.Networking;
 /// leak an answer is ever published; the host scores from its own copy on reveal.
 public static class LiveScoring
 {
+    /// A3.13: did an edit change what the scorer reads? A typo fix in the prompt never
+    /// re-scores; a changed key, option set, accepted list, target number, order or
+    /// pairing does. Compared through the wire shape so a new spec field is covered.
+    public static bool KeyDiffers(Question a, Question b) => KeyJson(a) != KeyJson(b);
+    private static string KeyJson(Question q) => System.Text.Json.JsonSerializer.Serialize(new
+    {
+        q.Options, q.CorrectIndex, q.Accepted, q.Closest, q.Ordering, q.Matching, q.Enumerate,
+    });
+
     /// Points for one submission, by question type (partial credit for ordering/
     /// matching/enumerate; proximity for numeric; alias-match for typed; MCQ otherwise).
     public static int Score(Question q, LiveRoom.Answer a, IReadOnlyList<string> shuffledOrder,

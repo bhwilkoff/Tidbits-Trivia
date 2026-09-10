@@ -253,6 +253,9 @@ public sealed class LiveHostViewModel : ObservableObject
     // Reveal choreography (3.38): the correct option index once revealed (else null).
     public int? RevealCorrectIndex => Host.Revealed && !Host.CurrentIsPoll && Host.Current is { } q ? q.CorrectIndex : null;   // a poll lights no "right" bar
     public bool IsPoll => Host.CurrentIsPoll;
+    /// A3.13: the key was fixed after reveal and the scores were redone.
+    public string RescoreNote => Host.RescoreNote ?? "";
+    public bool HasRescoreNote => Host.RescoreNote is not null;
     public string? CurrentRoundNote => Host.CurrentRoundNote;
     /// The clip attached to the question on screen (audio/video round), or null.
     public string? CurrentClipPath => Host.CurrentClipPath;

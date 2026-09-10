@@ -390,6 +390,10 @@ there is no regression baseline at all.
 - Windows box: `TIDBITS_PROFILE_NAME=<name>` renames the portable profile through the Settings
   path at launch; `scratchpad/e2e_name.py` photographs Settings, parses the `profile rename`
   Diag line for the profile id and reads `players/{id}.name` back from the wire.
+- Both hosts: `TIDBITS_LIVE_FIX_KEY=<answer>` + `TIDBITS_LIVE_FIX_AT=<secs>` reveal if needed,
+  then replace the current question's answer text + accepted list (A3.13);
+  `scratchpad/e2e_fixkey.py <mac|windows>` asserts the reveal paid Table 1, then that the
+  fix moved the point to Table 2 on the wire, and photographs the cockpit's re-score note.
 - Both hosts: `TIDBITS_LIVE_RENAME=<name>` + `TIDBITS_LIVE_RENAME_AT=<secs>` rename the
   alphabetically first joined team (A3.12); `scratchpad/e2e_rename.py <mac|windows>`
   joins two wire tables and asserts `meta/names/{uid}` names ONLY the first, then

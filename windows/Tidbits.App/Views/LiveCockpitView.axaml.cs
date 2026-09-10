@@ -741,6 +741,17 @@ public partial class LiveCockpitView : UserControl
                 await Task.Delay(TimeSpan.FromSeconds(Services.LaunchHooks.LiveEditAt));
                 if (Vm?.Host.Current is { } q) await Vm.Host.ReplaceCurrent(q with { Prompt = text });
             }
+            if (Services.LaunchHooks.LiveFixKey is { Length: > 0 } fixKey && Services.LaunchHooks.LiveFixAt is { } fixAt)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(fixAt));
+                if (Vm is { } fv && fv.Host.Current is { } fq)
+                {
+                    if (!fv.Host.Revealed) { await fv.Reveal(); await Task.Delay(3000); }
+                    Services.LaunchHooks.Diag($"fixkey hook: before={string.Join("|", fv.Host.Standings.Select(j => j.Name + "=" + j.Score))}");
+                    await fv.Host.ReplaceCurrent(fq with { Accepted = new[] { fixKey }, Options = fq.Options.Select((o, i) => i == fq.CorrectIndex ? fixKey : o).ToList() });
+                    Services.LaunchHooks.Diag($"fixkey hook: {fv.Host.RescoreNote ?? "(no note)"} after={string.Join("|", fv.Host.Standings.Select(j => j.Name + "=" + j.Score))}");
+                }
+            }
             if (Services.LaunchHooks.LiveRename is { Length: > 0 } newName && Services.LaunchHooks.LiveRenameAt is { } renameAt)
             {
                 await Task.Delay(TimeSpan.FromSeconds(renameAt));

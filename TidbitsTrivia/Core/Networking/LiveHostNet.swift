@@ -186,6 +186,7 @@ final class LiveHostNet {
     /// Push a team's authoritative score (host owns scoring / manual override).
     func setScore(_ uid: String, _ score: Int) async {
         guard isOpen else { return }
+        scores[uid] = max(0, score)   // the stream echoes it later; a re-score reads it now
         try? await db.put("\(LiveRoom.path(code))/scores/\(uid)", max(0, score))
     }
 

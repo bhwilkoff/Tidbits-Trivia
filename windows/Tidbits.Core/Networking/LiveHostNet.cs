@@ -192,6 +192,7 @@ public sealed class LiveHostNet
     public async Task SetScore(string uid, int score)
     {
         if (!IsOpen) return;
+        lock (_lock) _scores[uid] = Math.Max(0, score);   // the stream echoes it later; a re-score reads it now
         try { await _db.Put($"{LiveRoom.Path(Code)}/scores/{uid}", Math.Max(0, score)); } catch { }
     }
 

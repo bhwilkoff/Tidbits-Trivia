@@ -260,6 +260,19 @@ typed (its own `teams/{uid}` is untouched; the host's copy is laid over it).
 Windows has the same verb as a Rename button on the row. Joined rows also let a
 name wrap to two lines, so "The Quizzards" no longer reads "The Qui…".
 
+A3.13 **A key fixed after reveal re-scores the room** (2026-09-10). A3.6 let the
+host fix the question on screen; if the fix came after the reveal, the teams
+paid under the wrong key kept their points and the teams who were right got
+nothing. Now, when the editor's Save changes what the scorer reads (the answer,
+the option set, the accepted spellings, the target number, the order, the
+pairing) on a revealed question, the cockpit takes back what that question paid
+(from the answer sheet, so a wager stake reverses as a stake), scores it again
+under the fixed key, and says what it did: "Key fixed — re-scored, 2 teams
+changed" (or "nobody's score changed"). A typo fix in the prompt or the story
+never re-scores. The answer sheet keeps only the corrected record; hand
+"Accepted" rulings made against the old key are cleared with it. Windows does
+the same from its editor.
+
 ## §A4 — Player join & teams (serverless)
 
 A4.1 **Teams, not solo, are the unit.** Several phones join one team; the

@@ -1355,6 +1355,7 @@ Screenshot hooks (no-ops in prod): `TIDBITS_AUTOPLAY=mode:category`,
 | Pay-to-restore-streak | Textbook dark pattern (Decision 022) | never |
 | Non-MCQ formats (timeline drag, grouping wall) | Need per-client UI; corpus is 4-option-only (Decision 025) | a format earns the custom UI |
 | Couch Co-op (thin same-room co-op) | iOS pass-and-play already delivers same-room multiplayer; a *thin* couch mode just duplicates it, and a *valuable* tvOS team mode (team setup + team scoring + focus flows) is a full marquee feature, not thin — and overlaps the deferred Buzz Night, the genuinely differentiated living-room mode. Evaluated 2026-06-20; skipped as not earning its place. | Buzz Night (phone-as-buzzer) ships and a tvOS team-scoreboard shell exists to build on |
+| Joiners reading the host's renamed team name (A3.12) | The phones have no standings table — only the join roster and co-player capture; a five-platform roster merge buys one tap of a typo (2026-09-10) | joiner standings ever ship |
 
 ## Session log
 
@@ -2390,6 +2391,25 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 / MSIX 1.9.19.0. Next: punch list 15 (analytics) as a host-side "night
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
+
+**2026-09-10z — Live loop tick 26: a key fixed after reveal re-scores.** Audit
+item "re-score after a mid-night key fix", confirmed in the code: both hosts'
+edit-after-reveal republished the question and left the wrong teams paid.
+A3.13 / 3.72 on both: `keyDiffers` (pure, tested on both stacks — a prompt or
+story edit never re-scores), reverse what the answer sheet says the question
+paid, score again under the new key, keep only the corrected record, and say
+"Key fixed — re-scored, N teams changed" on the cockpit. Both host nets now
+update their local score cache on `setScore` so the reversal is read at once
+(the stream echo used to be the only writer). Mac: the editor's Save bumps
+`session.rescoreRequested`; the container (which owns the scorer) re-scores.
+Hook `TIDBITS_LIVE_FIX_KEY`/`_AT`. **Verified on the glass** (`e2e_fixkey.py`):
+Mac — Table 1 paid 1 at reveal, the fix to "Neo" put T1=0, T2=1 on the wire,
+`pub.answer` "Neo", cockpit note photographed; Windows box — the same wire flip (T1 1→0, T2 0→1, `pub.answer` "Neo") and the cockpit's re-score note photographed. Also
+closed as moot: "joiners reading the merged team name on their standings" — no
+joiner renders a standings table, only the join roster; deferred (Out of
+scope). Versions 1.9.24 / 154 / vc115 / MSIX 1.9.24.0. Next: round-level
+points multiplier vs the per-question overrides (audit), Windows host toasts,
+event history feed, native phone remote.
 
 **2026-09-10y — Live loop tick 25: the Windows display name is the portable
 profile's.** 3.71 from tick 24: Settings "Display name" and "Shuffle" now write

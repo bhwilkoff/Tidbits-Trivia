@@ -27,6 +27,10 @@ final class LiveHostSession {
     var manuallyAccepted: Set<String> = []
     /// A3.8: the night's answer sheet, one record per revealed question.
     var answerLog: [LiveAnswerRecord] = []
+    /// A3.13: what the last key fix did to the scores; cleared on the next question.
+    var rescoreNote: String? = nil
+    /// Bumped by the editor's Save when the key changed after reveal; the container re-scores.
+    var rescoreRequested = 0
     /// Bumped when the host changes the current question's clip mid-night, so the
     /// container re-offers the media to the phones (Decision 060) — `index` did
     /// not move, and that is what the resync used to key on.
@@ -266,6 +270,7 @@ final class LiveHostSession {
     func reveal() { revealed = true; deadlineMs = nil }
     func next() {
         revealed = false
+        rescoreNote = nil
         locked = false   // Wave C: new question — answers reopen
         if index + 1 >= questions.count { finished = true } else { index += 1; prepare(); armTimer() }
         // A3.9 (punch list 11): a wager round opens on the STANDINGS — a table stakes
@@ -573,6 +578,26 @@ struct LiveHostContainer_macOS: View {
             if !session.revealed { session.reveal(); try? await Task.sleep(for: .seconds(2)) }
             session.next()
         }
+        // TIDBITS_LIVE_FIX_KEY=<answer> (at TIDBITS_LIVE_FIX_AT s, default 25) — reveal if
+        // needed, then replace the current question's accepted list with that answer, the
+        // way the editor's Save does — which re-scores the room (A3.13).
+        .task {
+            let env = ProcessInfo.processInfo.environment
+            guard let key = env["TIDBITS_LIVE_FIX_KEY"], !key.isEmpty else { return }
+            try? await Task.sleep(for: .seconds(Double(env["TIDBITS_LIVE_FIX_AT"] ?? "") ?? 25))
+            guard let q = session.current else { return }
+            if !session.revealed { session.reveal(); await scoreReveal(); await net.publish(session.currentPub()); try? await Task.sleep(for: .seconds(3)) }
+            // The editor's Save changes the answer text AND its aliases; do the same, so the
+            // cockpit's answer line and the wire's `answer` agree.
+            var opts = q.options; if q.correctIndex < opts.count { opts[q.correctIndex] = key }
+            var fixed = Question(id: q.id, prompt: q.prompt, options: opts, correctIndex: q.correctIndex, categoryID: q.categoryID,
+                                 difficulty: q.difficulty, explanation: q.explanation, sourceTitle: q.sourceTitle, sourceURL: q.sourceURL, templateID: q.templateID)
+            fixed.tags = q.tags; fixed.imageURL = q.imageURL; fixed.closest = q.closest; fixed.ordering = q.ordering
+            fixed.matching = q.matching; fixed.enumerate = q.enumerate; fixed.roundIndex = q.roundIndex; fixed.accepted = [key]
+            session.replaceCurrent(fixed, audio: .keep, video: .keep)
+            await net.publish(session.currentPub())
+            if LiveNightHost.keyDiffers(q, fixed) { await rescoreCurrent() }
+        }
         // TIDBITS_LIVE_RENAME=<name> (at TIDBITS_LIVE_RENAME_AT s, default 15) — rename the
         // alphabetically first joined team the way the cockpit does (A3.12).
         .task {
@@ -642,6 +667,7 @@ struct LiveHostContainer_macOS: View {
             if let q = session.current { LivePlayedLog.shared.record([q.id], night: event.name) }   // A2.6: the room heard it
             await syncMedia()
         }
+        .onChange(of: session.rescoreRequested) { _, _ in Task { await rescoreCurrent() } }   // A3.13
         // Re-publish whenever the host advances or reveals; auto-score on reveal.
         .onChange(of: session.index) { _, _ in
             if let q = session.current { LivePlayedLog.shared.record([q.id], night: event.name) }
@@ -721,6 +747,28 @@ struct LiveHostContainer_macOS: View {
     /// (shared scorer). Free-text answers are alias-matched; the host reviews +
     /// overrides borderline ones in the scoreboard (§A3.3 leniency). Manual ± still
     /// applies on top (§A3.2).
+    /// A3.13: the key was wrong and the room was already paid — take back what this
+    /// question paid (from the answer sheet), score it again under the fixed key, and
+    /// say what changed. The sheet keeps only the corrected record.
+    private func rescoreCurrent() async {
+        guard let q = session.current else { return }
+        let qid = LiveRoom.qid(round: q.roundIndex ?? 0, question: session.index)
+        var before: [String: Int] = [:]
+        if let i = session.answerLog.lastIndex(where: { $0.qid == qid }) {
+            for l in session.answerLog[i].lines { before[l.uid] = l.points }
+            session.answerLog.remove(at: i)
+        }
+        for (uid, pts) in before where pts != 0 { await net.setScore(uid, (net.scores[uid] ?? 0) - pts) }
+        session.scoredIndices.remove(session.index)
+        session.manuallyAccepted = []   // a hand ruling on the OLD key is not one on the new key
+        await scoreReveal()
+        var after: [String: Int] = [:]
+        if let r = session.answerLog.last, r.qid == qid { for l in r.lines { after[l.uid] = l.points } }
+        let changed = Set(before.keys).union(after.keys).filter { (before[$0] ?? 0) != (after[$0] ?? 0) }.count
+        session.rescoreNote = changed == 0 ? "Key fixed — nobody's score changed"
+                                           : "Key fixed — re-scored, \(changed) \(changed == 1 ? "team" : "teams") changed"
+    }
+
     private func scoreReveal() async {
         guard let q = session.current else { return }
         guard !session.scoredIndices.contains(session.index) else { return }   // adaptability: score each question ONCE
@@ -1040,6 +1088,11 @@ struct LiveHostView_macOS: View {
                     }
                     .padding(8).background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.blue.opacity(0.12)))
                     .accessibilityIdentifier("live.cockpitQuestionNote")
+                }
+                if let note = session.rescoreNote {   // A3.13
+                    Label(note, systemImage: "arrow.triangle.2.circlepath")
+                        .font(.callout).foregroundStyle(Tidbits.Palette.coral)
+                        .accessibilityIdentifier("live.rescoreNote")
                 }
                 if session.currentRoundIsWager {   // Wave A: wager round indicator
                     Label(session.showScores ? "Wager round — the standings are on the big screen so the tables can stake; hide them when they are ready"
@@ -1580,6 +1633,19 @@ struct LiveHostView_macOS: View {
         .padding(12).quietCard(fill: Tidbits.Palette.blue.opacity(0.08))
     }
 
+    /// The editor's Save: the night's own copy changes, the room sees it at once, and a
+    /// key fixed after reveal asks the container (which owns the scorer) to re-score (A3.13).
+    private func saveEdited(_ q: Question, audio: QuestionDraft.ClipChange, video: QuestionDraft.ClipChange, note: String) {
+        let old = session.current
+        let keyFix = session.revealed && old.map { LiveNightHost.keyDiffers($0, q) } == true
+        session.replaceCurrent(q, audio: audio, video: video, note: note)
+        editingCurrent = nil
+        Task {
+            await net.publish(session.currentPub())
+            if keyFix { session.rescoreRequested += 1 }
+        }
+    }
+
     private func acceptFromEveryone(_ typed: String, _ q: Question) async {
         await liveAcceptFromEveryone(typed, q, session: session, net: net)
     }
@@ -1749,11 +1815,7 @@ struct LiveHostView_macOS: View {
         }
         .sheet(item: $editingCurrent) { draft in
             LiveQuestionEditor_macOS(draft: draft, format: session.currentRoundMode,
-                                     onSave: { q, audio, video, note in
-                                         session.replaceCurrent(q, audio: audio, video: video, note: note)
-                                         editingCurrent = nil
-                                         Task { await net.publish(session.currentPub()) }
-                                     },
+                                     onSave: { q, audio, video, note in saveEdited(q, audio: audio, video: video, note: note) },
                                      onCancel: { editingCurrent = nil })
         }
         .sheet(isPresented: $showTieBreak) {

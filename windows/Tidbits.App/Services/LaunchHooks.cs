@@ -107,6 +107,10 @@ public static class LaunchHooks
     /// TIDBITS_LIVE_RENAME=<name> at TIDBITS_LIVE_RENAME_AT=<secs> — rename the alphabetically first joined team (A3.12).
     public static string? LiveRename => Env("TIDBITS_LIVE_RENAME");
     public static double? LiveRenameAt => double.TryParse(Env("TIDBITS_LIVE_RENAME_AT"), out var v) ? v : null;
+    /// TIDBITS_LIVE_FIX_KEY=<answer> at TIDBITS_LIVE_FIX_AT=<secs> — reveal if needed, then replace the current
+    /// question's accepted list with that answer, which re-scores the room (A3.13).
+    public static string? LiveFixKey => Env("TIDBITS_LIVE_FIX_KEY");
+    public static double? LiveFixAt => double.TryParse(Env("TIDBITS_LIVE_FIX_AT"), out var v) ? v : null;
     /// TIDBITS_PROFILE_NAME=<name> — rename the portable profile at launch through the Settings path (3.71).
     public static string? ProfileName => Env("TIDBITS_PROFILE_NAME");
     /// TIDBITS_DEEPLINK=<url> — route a link on launch exactly as a registered-protocol launch would (3.37).

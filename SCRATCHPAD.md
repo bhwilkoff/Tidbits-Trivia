@@ -2401,8 +2401,7 @@ listed PAPER teams only (`session.standings`) — a phones-only night ended on
 "No teams were scored"; it now merges phone + paper like the projector and
 the CSV. **Verified on the glass** (`scratchpad/e2e_report.py`): the Mac's
 final standings with Table 1 (crown, 1) and Table 2 (0) and the report (50%
-right, 100% answering, hardest = the Neo question). REPORT_SCRATCH_WIN
-Versions 1.9.20 / 150 / vc111 / MSIX 1.9.20.0. The audited punch list is
+right, 100% answering, hardest = the Neo question). The Windows box: the same numbers in the Night report dialog. Versions 1.9.20 / 150 / vc111 / MSIX 1.9.20.0. The audited punch list is
 now closed (1–15). Next: a fresh audit pass — re-mine the premium backlog and
 the design docs against the code for what is still ⬜, and the stop
 condition.

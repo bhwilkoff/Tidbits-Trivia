@@ -73,6 +73,8 @@ sealed interface Route {
     data object NightJoin : Route
     data object NightLive : Route
     data class LiveRoom(val code: String, val name: String) : Route
+    /** G6: the host's phone as a remote for the laptop cockpit. */
+    data class LiveRemote(val code: String) : Route
     data class LiveHost(val rounds: List<Pair<String, Int>>, val category: Category) : Route
     /** A shared single question: `tidbits://item/<id>` (DEEP_LINKS.md). */
     data class SharedItem(val id: String) : Route
@@ -157,6 +159,7 @@ fun AppRoot(
         if (h.openParty) backStack.add(Route.Party)
         if (h.openNightSetup) backStack.add(Route.NightSetup)
         h.liveJoin?.let { (code, name) -> backStack.add(Route.LiveRoom(code, name)) }
+        h.liveRemote?.let { (code, _) -> backStack.add(Route.LiveRemote(code)) }
         // Same quick plan Apple's TIDBITS_NIGHT_HOST uses: two short rounds of
         // mixed questions, enough to publish and be joined.
         if (h.nightHost) {
@@ -308,10 +311,12 @@ fun AppRoot(
                             backStack.removeAt(backStack.lastIndex); backStack.add(Route.LiveRoom(code, name))
                         },
                         onCancel = { backStack.removeAt(backStack.lastIndex) },
+                        onRemote = { code -> backStack.add(Route.LiveRemote(code)) },
                     )
                     is Route.LiveRoom -> LiveRoomScreen(r.code, r.name) {
                         backStack.removeAt(backStack.lastIndex)
                     }
+                    is Route.LiveRemote -> LiveRemoteScreen(r.code) { backStack.removeAt(backStack.lastIndex) }
                     is Route.LiveHost -> NightHostScreen(r.rounds, r.category, store) {
                         backStack.removeAt(backStack.lastIndex)
                     }
@@ -1096,7 +1101,7 @@ private fun NightSetupScreen(
 }
 
 @Composable
-private fun NightJoinScreen(initialCode: String, initialName: String, onFound: (String, String) -> Unit, onCancel: () -> Unit) {
+private fun NightJoinScreen(initialCode: String, initialName: String, onFound: (String, String) -> Unit, onCancel: () -> Unit, onRemote: (String) -> Unit = {}) {
     var code by remember { mutableStateOf(initialCode) }
     var name by remember { mutableStateOf(initialName) }
     var probing by remember { mutableStateOf(false) }
@@ -1155,6 +1160,8 @@ private fun NightJoinScreen(initialCode: String, initialName: String, onFound: (
                 colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White),
             ) { Text(if (probing) "Finding…" else "Join") }
         }
+        // G6: the host drives the night from this phone (native twin of the web's Host remote link).
+        TextButton(onClick = { onRemote(code) }) { Text("Hosting? Drive the night from this phone") }
     }
 }
 

@@ -23,6 +23,8 @@ struct LiveJoinView: View {
     @State private var roomTeams: [RosterTeam] = []
     @State private var probing = false
     @State private var formError: String?
+    /// G6: the host's phone as a remote (native twin of the web's Host remote link).
+    @State private var showRemote = false
 
     var body: some View {
         ZStack {
@@ -37,6 +39,8 @@ struct LiveJoinView: View {
         .onChange(of: scenePhase) { _, phase in   // Wave C: flag leaving the app mid-question (soft cheat signal)
             if phase != .active, client.pub?.phase == LiveRoom.Phase.question, !client.hasAnswered { client.blurred = true }
         }
+        .sheet(isPresented: $showRemote) { LiveRemoteView(initialCode: code) }
+        .task { if DebugHooks.liveRemote != nil { showRemote = true } }   // G6 harness
         .task {
             // CI/device hook: auto-resolve a known room to verify the flow headless.
             if ProcessInfo.processInfo.environment["TIDBITS_LIVE_AUTOJOIN"] == "1",
@@ -137,6 +141,11 @@ struct LiveJoinView: View {
             .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
             .disabled(client.joining || probing)
             Button("Cancel") { dismiss() }.font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).padding(.top, 4)
+            Button { showRemote = true } label: {   // G6: the host drives the night from this phone
+                Label("Hosting? Drive the night from this phone", systemImage: "iphone.radiowaves.left.and.right")
+                    .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.blue)
+            }
+            .accessibilityIdentifier("live.hostRemote")
             Spacer()
         }
         .padding(24)

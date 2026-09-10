@@ -480,6 +480,15 @@ object FirebaseNet {
         db.getReference("live/$code/teams/$me").removeValue()
     }
 
+    /** G6: the host's last executed command id, so a reconnecting remote resumes from the
+     *  HOST's counter (a remote that restarts at 1 would be refused forever). */
+    suspend fun liveRemoteLastId(code: String): Int =
+        db.getReference("live/$code/control/id").get().await().getValue(Long::class.java)?.toInt() ?: 0
+    /** G6: the phone remote's one write — the host READS and decides; never `pub`. */
+    suspend fun liveRemoteSend(code: String, id: Int, verb: String, pin: String) {
+        db.getReference("live/$code/control").setValue(mapOf("id" to id, "verb" to verb, "pin" to pin)).await()
+    }
+
     fun liveOnPub(code: String, cb: (LivePub?) -> Unit): () -> Unit =
         listen("live/$code/pub") { cb(parsePub(it)) }
 

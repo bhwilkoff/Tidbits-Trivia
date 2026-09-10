@@ -57,6 +57,14 @@ object ScreenshotHooks {
      *  put an Android device in a host's room was blind tapping, so cross-platform
      *  multiplayer was the one feature no harness could actually exercise. */
     var liveJoin: Pair<String, String>? = null
+    /** tidbits_live_remote=<code> + tidbits_live_remote_pin=<pin> — open the phone REMOTE paired
+     *  to that room (G6, native); tidbits_live_remote_verb at tidbits_live_remote_at seconds sends one. */
+    var liveRemote: Pair<String, String>? = null
+        private set
+    var liveRemoteVerb: String? = null
+        private set
+    var liveRemoteAt: Int = 15
+        private set
     /** tidbits_live_tapclip=1 — a joiner takes up a Decision 060 clip offer without a finger. */
     var liveTapClip: Boolean = false
         private set
@@ -128,6 +136,12 @@ object ScreenshotHooks {
         if (intent.hasExtra("tidbits_night_autostart"))
             nightAutostart = intent.getIntExtra("tidbits_night_autostart", -1).takeIf { it >= 0 }
         if (intent.hasExtra("tidbits_live_tapclip")) liveTapClip = intent.getStringExtra("tidbits_live_tapclip") == "1"
+        intent.getStringExtra("tidbits_live_remote")?.takeIf { it.isNotBlank() }?.let { code ->
+            val pin = intent.getStringExtra("tidbits_live_remote_pin")?.trim() ?: ""
+            if (pin.length == 6) liveRemote = code.trim().uppercase().take(4) to pin
+            liveRemoteVerb = intent.getStringExtra("tidbits_live_remote_verb")?.takeIf { it.isNotBlank() }
+            liveRemoteAt = intent.getIntExtra("tidbits_live_remote_at", 15)
+        }
         intent.getStringExtra("tidbits_live_join")?.takeIf { it.isNotBlank() }?.let { code ->
             liveJoin = code.trim().uppercase() to
                 (intent.getStringExtra("tidbits_live_name")?.takeIf { it.isNotBlank() } ?: "Android")

@@ -19,7 +19,7 @@ import Foundation
 ///    every player in the pub has it. A remote authorised by the code alone would
 ///    let any table reveal the answer. So the host shows a PIN on the LAPTOP only,
 ///    and a command without it is refused.
-struct RemoteCommand: Codable, Equatable {
+nonisolated struct RemoteCommand: Codable, Equatable, Sendable {
     var id: Int          // monotonic within a room
     var verb: String
     var pin: String

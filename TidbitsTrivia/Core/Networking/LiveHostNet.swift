@@ -246,8 +246,9 @@ final class LiveHostNet {
 
     /// Pair a remote. The PIN is shown on the LAPTOP only — the room code is
     /// printed on the projector, so it authorises nothing.
-    func startRemote() -> String {
-        if remotePIN.isEmpty { remotePIN = LiveRemote.makePIN() }
+    func startRemote(pin: String? = nil) -> String {
+        if let pin, pin.count == 6 { remotePIN = pin }   // a harness-known PIN (TIDBITS_LIVE_REMOTE_PIN); production never passes one
+        else if remotePIN.isEmpty { remotePIN = LiveRemote.makePIN() }
         return remotePIN
     }
     func stopRemote() { remotePIN = "" }

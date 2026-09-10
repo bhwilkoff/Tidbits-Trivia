@@ -2392,6 +2392,26 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10ad — Live loop tick 30: the phone remote goes native.** PARITY row
+G6 had iOS ⏳ and Android ⏳ since 2026-09-03 — a host with the Tidbits app on
+their phone had to open the WEB to walk the room. iOS `LiveRemoteView` (a sheet
+from the join screen) and Android `LiveRemoteScreen` (a route from the join
+screen; `FirebaseNet.liveRemoteLastId/liveRemoteSend`), both: code + PIN pair,
+id resumed from the host's counter, Reveal / Next / Skip / Scores, the prompt
+streamed from `pub`, the web's keep-the-id-on-failure rule. Rules R-REMOTE-1..3
+in iOS-DESIGN and ANDROID-DESIGN. Hooks: host `TIDBITS_LIVE_REMOTE_PIN` (Core
+`startRemote(pin:)`), iOS `TIDBITS_LIVE_REMOTE*`, Android `tidbits_live_remote*`.
+`RemoteCommand` became `nonisolated` (Swift 6 isolated-conformance error off the
+main actor). **Verified on the real bench** (`e2e_remote.py`): the Android TV dongle's remote and the iPhone's each flipped the wire to
+`reveal` (`control` carried the id/verb/pin), and both photographed with the room,
+the round, the prompt and the revealed answer. **Found on the glass:** the Android
+remote showed "Waiting for the host…" while its commands worked — `FirebaseNet.listen`
+swallows `onCancelled`, so the pub listener attached before anonymous auth was DENIED by
+the rules and never retried; the joiner never hit it because `liveJoin()` authenticates
+first. `pair()` now awaits `ensureAuth()` (the iOS remote already did).
+Versions 1.9.28 / 158 / vc119 / MSIX 1.9.28.0. Next: event history feed, the
+Windows remote (the Windows app as a remote for a Mac host), host toasts.
+
 **2026-09-10ac — Live loop tick 29: the Windows joiner answers every format.**
 Found while photographing tick 28: the Windows joiner drew answer buttons from
 `Pub.Options` and nothing else — a Name-It question (the QA night's own) showed

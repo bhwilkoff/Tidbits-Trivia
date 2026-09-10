@@ -385,6 +385,25 @@ enum DebugHooks {
         return c
     }
 
+    /// TIDBITS_LIVE_REMOTE=<code> + TIDBITS_LIVE_REMOTE_PIN=<pin> → open the phone REMOTE
+    /// paired to that room (G6, native). TIDBITS_LIVE_REMOTE_VERB=reveal|next|skip|scores at
+    /// TIDBITS_LIVE_REMOTE_AT seconds (default 15) sends one command the way a tap does.
+    static var liveRemote: (code: String, pin: String)? {
+        let env = ProcessInfo.processInfo.environment
+        guard let c = env["TIDBITS_LIVE_REMOTE"]?.trimmingCharacters(in: .whitespaces), c.count == 4,
+              let p = env["TIDBITS_LIVE_REMOTE_PIN"]?.trimmingCharacters(in: .whitespaces), p.count == 6 else { return nil }
+        return (c.uppercased(), p)
+    }
+    static var liveRemoteVerb: String? { ProcessInfo.processInfo.environment["TIDBITS_LIVE_REMOTE_VERB"] }
+    static var liveRemoteAt: TimeInterval { TimeInterval(ProcessInfo.processInfo.environment["TIDBITS_LIVE_REMOTE_AT"] ?? "") ?? 15 }
+    /// TIDBITS_LIVE_REMOTE_PIN on a HOST → pair the remote at launch with this PIN, so a
+    /// harness can drive the cockpit from a phone it also drives.
+    static var hostRemotePIN: String? {
+        guard let p = ProcessInfo.processInfo.environment["TIDBITS_LIVE_REMOTE_PIN"], p.count == 6,
+              ProcessInfo.processInfo.environment["TIDBITS_LIVE_REMOTE"] == nil else { return nil }
+        return p
+    }
+
     /// TIDBITS_NIGHT_AUTOSTART=<seconds> → after the room is open and this many
     /// seconds have passed, start the night without waiting for the host's press.
     ///

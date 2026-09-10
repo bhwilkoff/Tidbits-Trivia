@@ -581,6 +581,7 @@ struct LiveHostContainer_macOS: View {
             if !session.revealed { session.reveal(); try? await Task.sleep(for: .seconds(2)) }
             session.next()
         }
+        .task { if let pin = DebugHooks.hostRemotePIN { _ = net.startRemote(pin: pin) } }   // G6 harness: a known PIN
         // TIDBITS_LIVE_FIX_KEY=<answer> (at TIDBITS_LIVE_FIX_AT s, default 25) — reveal if
         // needed, then replace the current question's accepted list with that answer, the
         // way the editor's Save does — which re-scores the room (A3.13).

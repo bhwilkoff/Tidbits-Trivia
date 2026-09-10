@@ -398,6 +398,17 @@ four states (§4.2).
 
 ---
 
+### Phone host remote (G6, 2026-09-10)
+
+R-REMOTE-1 **The remote is reachable from the join screen** ("Hosting? Drive the
+night from this phone") — the host is already standing in the room with the
+join code on the projector; a separate host tab would hide the one verb they
+need. R-REMOTE-2 **The room code never authorises**: pairing needs the six-digit
+PIN the laptop shows, the pair screen says so, and an unpaired host accepts
+nothing. R-REMOTE-3 **Four verbs, thumb-sized** — Reveal, Next, Skip, Scores —
+with the current prompt above them so the host reads the question off the
+phone, not the projector behind them. Mirror of the web remote (`js/live.js`).
+
 ## §12 — The tests (run before any surface ships)
 
 12.1 **Competent-designer test** — rebuildable from one paragraph? If

@@ -390,6 +390,11 @@ there is no regression baseline at all.
 - Windows box: `TIDBITS_PROFILE_NAME=<name>` renames the portable profile through the Settings
   path at launch; `scratchpad/e2e_name.py` photographs Settings, parses the `profile rename`
   Diag line for the profile id and reads `players/{id}.name` back from the wire.
+- Phone remote (G6, native): a HOST launched with `TIDBITS_LIVE_REMOTE_PIN=<6 digits>` pairs its
+  remote at once with that PIN; iOS `TIDBITS_LIVE_REMOTE=<code>` + `_PIN` open the remote paired,
+  `_VERB=reveal|next|skip|scores` at `_AT` s sends one; Android the same as `tidbits_live_remote`,
+  `_pin`, `_verb`, `_at` extras. `scratchpad/e2e_remote.py dongle,iphone` asserts the wire's
+  `pub.phase` flips to reveal per remote and photographs each.
 - Windows joiner: `TIDBITS_LIVE_ANSWER=<text>` + `TIDBITS_LIVE_ANSWER_AT` (≥110 on the box) type
   into the joiner's own answer box and press its Submit; `scratchpad/e2e_wintype.py` hosts a
   Name-It on the Mac, joins from the box, photographs the box, and reads the typed answer back

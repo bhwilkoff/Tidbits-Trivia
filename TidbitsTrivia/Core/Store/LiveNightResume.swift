@@ -1,4 +1,8 @@
+#if os(macOS)
 import Foundation
+
+// macOS-only: `LiveEvent` (the authored night) is a Mac host type; the iOS/tvOS
+// builds compile Core too and have no host cockpit to resume.
 
 /// A2.13 — a night the host was in the MIDDLE of, kept so a crash or a closed lid is
 /// not the end of the evening.
@@ -72,3 +76,4 @@ final class LiveNightResume {
         defaults.removeObject(forKey: key)
     }
 }
+#endif

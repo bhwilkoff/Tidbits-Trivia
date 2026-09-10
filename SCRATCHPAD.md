@@ -38,10 +38,16 @@ real Mac app is the only local build. `LiveControlsSmokeTest` now uses
 `IsEffectivelyVisible` (a button inside the collapsed resume card is not
 reachable and not meant to be).
 
-**Seen, not fixed:** the Mac Events list holds every QA event TWICE with
-distinct ids — the file importer mints a fresh id per import, so opening the
-same `.tidbitsevent.json` twice makes a twin. Decide whether import should
-upsert on the file's id (next tick).
+**Seen, by design:** the Mac Events list holds every QA event TWICE with
+distinct ids — the importer mints a fresh id per import ON PURPOSE
+(LIVE-PACKAGE-FORMAT §2.3: a co-host's copy must ADD a night, never overwrite
+yours under the same id). The twins are the harness importing the same file
+on every run. Not a bug; not changing it.
+
+**CI on e509a79a:** Windows + Android green; Apple FAILED — the iOS build
+compiles Core too and `LiveNightResume` references `LiveEvent`, a Mac-only
+host type. Guarded `#if os(macOS)` (the test target is macOS-only, so the 4
+tests still run).
 
 ## Current state (2026-09-09k) — the Wikipedia source on every reveal (punch list #1)
 

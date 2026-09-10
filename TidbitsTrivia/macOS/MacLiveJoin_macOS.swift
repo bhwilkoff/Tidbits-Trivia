@@ -188,6 +188,9 @@ struct MacLiveJoinView_macOS: View {
                 LivePictureView(picture: pub.picture, fallback: pub.imageURL, code: client.code, maxHeight: 300, cornerRadius: 16)
                     .frame(maxWidth: 640)
             }
+            if pub.phase == LiveRoom.Phase.reveal, pub.poll == true {   // A2.10
+                Text("Thanks for voting — the room's pick is on the big screen.").font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.mint)
+            }
             if pub.phase == LiveRoom.Phase.reveal, let story = pub.story, !story.isEmpty {
                 Text(story).font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
                     .multilineTextAlignment(.center).frame(maxWidth: 640)

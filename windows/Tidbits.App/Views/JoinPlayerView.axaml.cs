@@ -325,8 +325,9 @@ public partial class JoinPlayerView : UserControl
             else
             {
                 btn.IsHitTestVisible = false;
-                if (reveal && i == c.Pub.AnswerIndex) { btn.Background = Correct; btn.Foreground = Brushes.White; }
-                else if (i == c.Chosen) { btn.Background = reveal ? Wrong : Picked; btn.Foreground = Brushes.White; }
+                bool poll = c.Pub.Poll == true;   // A2.10: no right or wrong on a poll
+                if (reveal && !poll && i == c.Pub.AnswerIndex) { btn.Background = Correct; btn.Foreground = Brushes.White; }
+                else if (i == c.Chosen) { btn.Background = reveal && !poll ? Wrong : Picked; btn.Foreground = Brushes.White; }
                 else btn.Opacity = 0.45;
             }
             OptionsPanel.Children.Add(btn);

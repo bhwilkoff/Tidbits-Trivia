@@ -301,7 +301,7 @@ struct TVLivePlayerView: View {
     private func optionButton(_ i: Int, _ opt: String, p: LiveRoom.Pub, revealed: Bool) -> some View {
         let chosen = client.chosen == i
         let state: TVLiveOptionState = revealed
-            ? (p.answerIndex == i ? .correct : (chosen ? .wrong : .normal))
+            ? (p.poll == true ? .normal : p.answerIndex == i ? .correct : (chosen ? .wrong : .normal))
             : (chosen ? .chosen : .normal)
         return Button { Task { await client.submit(choice: i) } } label: {
             HStack(spacing: 20) {
@@ -326,7 +326,8 @@ struct TVLivePlayerView: View {
                : client.hasAnswered ? ("Buzzed — wait for the host.", Tidbits.Palette.mint)
                : ("First to buzz answers out loud.", TVTheme.textSoft))
             : revealed
-            ? (p.options == nil   // host-scored formats: nil == nil read as "Correct!" on an unanswered Name-It
+            ? (p.poll == true ? ("Thanks for voting — the room's pick is on the big screen.", Tidbits.Palette.mint)
+               : p.options == nil   // host-scored formats: nil == nil read as "Correct!" on an unanswered Name-It
                ? (client.hasAnswered ? ("Answer sent — the host scores it.", Tidbits.Palette.mint) : ("No answer submitted.", TVTheme.textSoft))
                : client.chosen == p.answerIndex ? ("Correct!", Tidbits.Palette.mint) : client.chosen == nil ? ("No answer submitted.", TVTheme.textSoft) : ("Not this time.", Tidbits.Palette.coral))
             : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint)

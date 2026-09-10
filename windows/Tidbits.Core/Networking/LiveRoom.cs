@@ -123,6 +123,8 @@ public static class LiveRoom
         /// only; and the difficulty (1…5), always — mirrors Swift `Pub.answer/difficulty`.
         [JsonPropertyName("answer")] public string? Answer { get; init; }
         [JsonPropertyName("difficulty")] public int? Difficulty { get; init; }
+        /// A2.10: a poll — the room votes, no right answer, nobody scores. Mirrors Swift `Pub.poll`.
+        [JsonPropertyName("poll")] public bool? Poll { get; init; }
     }
 
     public sealed record Source

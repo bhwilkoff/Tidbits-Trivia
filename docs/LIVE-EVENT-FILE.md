@@ -117,6 +117,7 @@ must keep the clip arrays index-parallel on both platforms.
 | `rounds[i].questionTimers` (2026-09-09, additive; `[Int?]` index-parallel to `questions`, null = the round default) | `LiveRound.questionTimers` | `LiveEvent.RoundQuestionTimers[i]` |
 | `rounds[i].questionPoints` (same shape; null = the night's points-per-correct) | `LiveRound.questionPoints` | `LiveEvent.RoundQuestionPoints[i]` |
 | `rounds[i].questionNotes` (`[String?]`, same shape; the host's cue for one question) | `LiveRound.questionNotes` | `LiveEvent.RoundQuestionNotes[i]` |
+| `rounds[i].questionPolls` (`[Bool?]`, same shape; `true` = a poll, the room votes and nobody scores) | `LiveRound.questionPolls` | `LiveEvent.RoundQuestionPolls[i]` |
 | `rounds[i].isWager` | `LiveRound.isWager` | `LiveEvent.WagerFinalRound` on the LAST round only |
 | `rounds[i].title` | `LiveRound.title` | derived from the mode's title when absent |
 

@@ -36,6 +36,8 @@ struct LiveRound: Identifiable, Codable, Hashable {
     /// on), index-parallel like the overrides; "" = none. Cockpit-only, like the
     /// round note — never published.
     var questionNotes: [String]? = nil
+    /// A2.10: which questions are POLLS (the room votes, nobody scores), index-parallel; nil = none.
+    var questionPolls: [Bool]? = nil
     var isSpeed: Bool? = nil            // Wave B: a speed round — correct answers earn a fastest-first bonus
     /// G1: a BUZZ round — the room races to buzz and the FIRST team gets to answer
     /// out loud; the host marks it right or wrong and a wrong buzz reopens it to the
@@ -76,6 +78,7 @@ struct LiveEvent: Identifiable, Codable, Hashable {
 
     var totalQuestions: Int { rounds.reduce(0) { $0 + $1.questions.count } }
     /// A2.8: the override for question `qi` of round `ri`, or nil for the default.
+    static func isPoll(_ list: [Bool]?, _ qi: Int) -> Bool { list.map { $0.indices.contains(qi) && $0[qi] } ?? false }
     static func note(_ list: [String]?, _ qi: Int) -> String? {
         guard let list, list.indices.contains(qi) else { return nil }
         let t = list[qi].trimmingCharacters(in: .whitespacesAndNewlines)

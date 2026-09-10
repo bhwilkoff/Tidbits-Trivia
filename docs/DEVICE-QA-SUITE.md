@@ -372,6 +372,9 @@ there is no regression baseline at all.
   check `curl http://127.0.0.1:8080/js/live.js` — the local server dies quietly.
   `e2e_wrap.py windows,dongle` adds the box and the Android TV dongle as joiners
   (Android needs the DEBUG apk; the harness installs it).
+- `scratchpad/e2e_poll.py <mac|windows> web,iphone,dongle` hosts a night whose first
+  question is a poll and checks the wire (poll:true, no answer on reveal, nobody
+  paid), the joiners' "Thanks for voting" and the projector's tally.
 - Both hosts: `TIDBITS_LIVE_EXPORT_ANSWERS=<path>` writes the answer sheet (A3.8)
   8 s (Mac) / 5 s (box) after the ACCEPT_ALL ruling; `scratchpad/e2e_answers.py`
   reads it back and checks the credit column.

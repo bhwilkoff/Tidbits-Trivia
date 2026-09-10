@@ -749,6 +749,9 @@ struct LiveBuilderView_macOS: View {
                     .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
                 let qTimer = LiveEvent.override(working.rounds[ri].questionTimers, qi)
                 let qPoints = LiveEvent.override(working.rounds[ri].questionPoints, qi)
+                if LiveEvent.isPoll(working.rounds[ri].questionPolls, qi) {   // A2.10
+                    Label("Poll · the room votes, nobody scores", systemImage: "chart.bar.fill").font(.caption).foregroundStyle(Tidbits.Palette.coral)
+                }
                 if let n = LiveEvent.note(working.rounds[ri].questionNotes, qi) {   // A2.9: the host's cue
                     Label(n, systemImage: "note.text").font(.caption).foregroundStyle(Tidbits.Palette.blue).lineLimit(1)
                 }
@@ -780,6 +783,11 @@ struct LiveBuilderView_macOS: View {
                 }
                 Button("Duplicate") { insertQuestion(q.duplicatedForEditing(), into: ri, at: qi + 1) }
                 Button("Swap for a fresh one") { Task { await swapForFresh(ri, qi) } }.disabled(busy)
+                if q.closest == nil, q.ordering == nil, q.matching == nil, q.accepted == nil, q.enumerate == nil {   // A2.10: polls are choice questions
+                    Button(LiveEvent.isPoll(working.rounds[ri].questionPolls, qi) ? "Make this a scored question again" : "Make this a poll (no right answer)") {
+                        setPoll(ri, qi, !LiveEvent.isPoll(working.rounds[ri].questionPolls, qi))
+                    }
+                }
                 Menu("Timer for this question") {   // A2.8
                     Button("Round default") { setOverride(ri, qi, timer: 0) }
                     ForEach([15, 30, 45, 60, 90, 120], id: \.self) { secs in
@@ -923,12 +931,29 @@ struct LiveBuilderView_macOS: View {
         }
         fix(&working.rounds[ri].questionTimers)
         fix(&working.rounds[ri].questionPoints)
+        if var pl = working.rounds[ri].questionPolls {
+            if let at = insertAt { pl.insert(false, at: min(at, pl.count)) }
+            if let at = removeAt, pl.indices.contains(at) { pl.remove(at: at) }
+            if let (a, b) = swap, pl.indices.contains(a), pl.indices.contains(b) { pl.swapAt(a, b) }
+            working.rounds[ri].questionPolls = pl.contains(true) ? pl : nil
+        }
         if var n = working.rounds[ri].questionNotes {
             if let at = insertAt { n.insert("", at: min(at, n.count)) }
             if let at = removeAt, n.indices.contains(at) { n.remove(at: at) }
             if let (a, b) = swap, n.indices.contains(a), n.indices.contains(b) { n.swapAt(a, b) }
             working.rounds[ri].questionNotes = n.contains(where: { !$0.isEmpty }) ? n : nil
         }
+    }
+
+    /// A2.10: mark one question a poll (or not), index-parallel like the overrides.
+    private func setPoll(_ ri: Int, _ qi: Int, _ on: Bool) {
+        guard working.rounds.indices.contains(ri) else { return }
+        let count = working.rounds[ri].questions.count
+        guard qi < count else { return }
+        var l = working.rounds[ri].questionPolls ?? []
+        while l.count < count { l.append(false) }
+        l[qi] = on
+        working.rounds[ri].questionPolls = l.contains(true) ? l : nil
     }
 
     /// A2.9: the host note for one question, index-parallel like the overrides.

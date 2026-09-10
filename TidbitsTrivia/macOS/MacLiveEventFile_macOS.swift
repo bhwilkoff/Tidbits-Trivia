@@ -63,6 +63,7 @@ enum LiveEventFile {
         var questionTimers: [Int?]?
         var questionPoints: [Int?]?
         var questionNotes: [String?]?
+        var questionPolls: [Bool?]?
     }
 
     enum FileError: LocalizedError {
@@ -132,7 +133,8 @@ enum LiveEventFile {
                                   questions: r.questions,
                                   questionTimers: r.questionTimers.map { $0.map { $0 > 0 ? $0 : nil } },
                                   questionPoints: r.questionPoints.map { $0.map { $0 > 0 ? $0 : nil } },
-                                  questionNotes: r.questionNotes.map { $0.map { $0.isEmpty ? nil : $0 } })
+                                  questionNotes: r.questionNotes.map { $0.map { $0.isEmpty ? nil : $0 } },
+                                  questionPolls: r.questionPolls.map { $0.map { $0 ? true : nil } })
                 }))
     }
 
@@ -178,6 +180,7 @@ enum LiveEventFile {
             round.questionTimers = r.questionTimers.flatMap { t in t.contains { ($0 ?? 0) > 0 } ? t.map { $0 ?? 0 } : nil }
             round.questionPoints = r.questionPoints.flatMap { t in t.contains { ($0 ?? 0) > 0 } ? t.map { $0 ?? 0 } : nil }
             round.questionNotes = r.questionNotes.flatMap { t in t.contains { !($0 ?? "").isEmpty } ? t.map { $0 ?? "" } : nil }
+            round.questionPolls = r.questionPolls.flatMap { t in t.contains { $0 == true } ? t.map { $0 ?? false } : nil }
             return round
         }
         return event

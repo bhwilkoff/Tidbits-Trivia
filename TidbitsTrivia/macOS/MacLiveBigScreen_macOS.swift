@@ -338,7 +338,8 @@ struct LiveBigScreen_macOS: View {
                     let hasPicture = el.shows("picture") && q.imageURL != nil && !hasVideo
                     let hasMedia = hasPicture || hasVideo
                     let hasVotes = !(coordinator.net?.answers.isEmpty ?? true)
-                    let tallyShown = el.shows("tally") && LiveNightHost.isMCQ(q) && (hasVotes || s.revealed)
+                    // A2.10: a poll IS its tally — it shows even with the tally element switched off.
+                    let tallyShown = (el.shows("tally") || s.currentIsPoll) && LiveNightHost.isMCQ(q) && (hasVotes || s.revealed)
                     let storyShown = el.shows("story") && s.revealed && !q.explanation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     // A8.9 resizing: a slide with little on it gives the question the
                     // room — the prompt grows when the bottom band, the media and the
@@ -365,8 +366,8 @@ struct LiveBigScreen_macOS: View {
                             .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Tidbits.Palette.border, lineWidth: 4))
                     }
                     if tallyShown {
-                        voteTally(q, revealed: s.revealed)   // A8: the room watches the votes land
-                    } else if s.revealed {
+                        voteTally(q, revealed: s.revealed && !s.currentIsPoll)   // A8: the room watches the votes land; a poll never lights a "right" bar
+                    } else if s.revealed, !s.currentIsPoll {   // a poll has no answer capsule
                         Text(q.correctAnswer)
                             .font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(.white)
                             .lineLimit(2).minimumScaleFactor(0.5)   // a long answer fits the capsule

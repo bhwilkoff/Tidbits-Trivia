@@ -68,7 +68,7 @@ in both directions (see the last paragraph).
 11. **Final-wager tie-break** (both partial). M.
 12. ~~**Drag-to-reorder on Windows**~~ — DONE 2026-09-09 (3.63; the gesture
     is headless-tested, not driven on the box).
-13. **Poll / no-answer question** (no authoring path). M.
+13. ~~**Poll / no-answer question**~~ — DONE 2026-09-09 (A2.10 / 3.64).
 14. **Music-bed auto-duck** under a clip. S.
 15. **Per-event / per-venue analytics.** L.
 
@@ -2341,3 +2341,16 @@ Mac, pre-empted on Windows). Exports: Mac Show ▸ Export Answer Sheet as CSV…
 1.9.16 / 146 / vc107 / MSIX 1.9.16.0. Next: punch list 13 (poll / no-answer
 question) and 11 (final-wager tie-break), then 14 (music-bed auto-duck) and
 15 (analytics).
+
+**2026-09-09s — Live loop tick 19: the poll question.** Punch list 13.
+`questionPolls` joins the §2.6 family (Mac `LiveRound.questionPolls` with the
+bookkeeping; Windows `RoundQuestionPolls`, keyed by id in the builder); the
+question menu / Timer · points flyout gains "Make this a poll (no right
+answer)" on choice questions; `pub.poll` (additive) from both hosts with no
+`answerIndex`/`answer` on reveal; both scorers skip a poll (the answer sheet
+keeps the votes as "(poll)"); both projectors light no "right" bar and show
+no answer capsule; the cockpit says "Poll — the room votes, nobody scores";
+all six joiners drop the right/wrong tint and say "Thanks for voting".
+**Found on the way:** the "accept from everyone" ruling GREW an accepted list on a choice question (turning it into a typed one — the projector then hid the tally and never revealed); `learnAccepted` and `liveAcceptFromEveryone` now refuse a question without an accepted list (Windows already did). The Mac projector's persisted element switches had the tally off, which is exactly when a poll must still show it → a poll overrides the tally switch on both projectors. **Verified on the glass** (`scratchpad/e2e_poll.py`): the Mac projector's poll tally (Pizza 1 · Tacos 1, nothing lit as right), the real web and the real Android TV dongle saying "Thanks for voting" with no tint, the wire clean. The Windows box: the same, with its projector bars up. The iPhone 12 hit an iOS Screen Time limit on Tidbits ("You've reached your limit") — the owner needs to lift it on the QA phone; the Apple joiner code path compiled and shares the verdict logic with tvOS. Versions 1.9.17 / 147 / vc108 / MSIX 1.9.17.0. Next:
+punch list 14 (music-bed auto-duck under a clip) and 11 (final-wager
+tie-break), then 15 (analytics).

@@ -101,6 +101,7 @@
                 <TextBlock IsVisible="{Binding AnswerLocked}" Text="Answer locked ✓" Foreground="#1E9E6A" FontWeight="SemiBold"/>
 
                 <!-- Reveal: the correct answer + the host's story behind it -->
+                <TextBlock IsVisible="{Binding IsPollReveal}" Text="Thanks for voting — the room's pick is on the big screen." FontWeight="Bold" Foreground="#1E9E6A" TextWrapping="Wrap"/>
                 <Border IsVisible="{Binding HasRevealAnswer}"
                         Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"

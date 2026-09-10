@@ -73,6 +73,12 @@ first — decodes `b64` into a blob, and plays it in a native `<audio>`/`<video>
 (AVPlayer / Media3). Nothing plays until the player taps; the host's `startedAt`
 readies the clip and positions it at the room's offset. The element survives
 `pub` re-renders (recreating it restarts the clip). `url` is never `tidbits-media:`.
+**`poll` (2026-09-09).** A POLL question: the room votes, there is no right
+answer, nobody scores. The host publishes `poll: true` on the frame and, on
+reveal, NO `answerIndex` and NO `answer`; the projectors show the tally with
+no "right" bar; a joiner says "thanks for voting" instead of a verdict.
+Additive; an older joiner simply sees a reveal with no answer.
+
 **`answer` + `difficulty` (2026-09-09).** `answer` is the correct answer as a
 LINE for every format (`answerIndex` only ever covered MCQ), published on
 reveal only; `difficulty` is the question's 1…5, always. Both additive. They

@@ -145,6 +145,18 @@ Nearest-Wins (numeric — also the tie-break unit), Ordering, Wager (Stake),
 Poll/Majority. Audio round and Fastest-Finger (speed scoring) are Phase B.
 Each format reuses the existing `GameMode`/question shapes where one maps.
 
+A2.10 **A question can be a poll** (2026-09-09). Not every question has a
+right answer: "what should the kitchen make next week", "which round did you
+enjoy most", the ice-breaker at the top of the night. From the question's
+menu, "Make this a poll (no right answer)" on any choice question. The room
+votes as usual; the projector shows the tally with no bar lit as right and no
+answer capsule; nobody scores (the answer sheet still records the votes,
+answer "(poll)"); every joiner is told "Thanks for voting — the room's pick
+is on the big screen" instead of a verdict. On the wire it is `pub.poll`,
+with no `answerIndex`/`answer` on reveal (LIVE-ROOM-CONTRACT). Stored
+index-parallel like the overrides (LIVE-EVENT-FILE §2.6). A poll is a
+conversation the host starts, not a question the room gets wrong.
+
 ## §A3 — The host cockpit (the emcee's live control — our differentiators)
 
 A3.1 **Host-paced by default; reveal-on-command.** The host advances

@@ -35,7 +35,9 @@ public class QuestionOverridesTest
             RoundQuestionTimers = new List<IReadOnlyList<int>> { new[] { 0, 45 } },
             RoundQuestionPoints = new List<IReadOnlyList<int>> { new[] { 3, 0 }, new[] { 0 } },
             RoundQuestionNotes = new List<IReadOnlyList<string>> { new[] { "Say KEE-ah-noo", "" } },
+            RoundQuestionPolls = new List<IReadOnlyList<bool>> { new[] { false, true } },
         };
+        Assert.False(ev.QuestionPoll(0, 0)); Assert.True(ev.QuestionPoll(0, 1)); Assert.False(ev.QuestionPoll(1, 0));
         Assert.Equal("Say KEE-ah-noo", ev.QuestionNote(0, 0)); Assert.Null(ev.QuestionNote(0, 1)); Assert.Null(ev.QuestionNote(1, 0));
         Assert.Null(ev.QuestionTimer(0, 0)); Assert.Equal(45, ev.QuestionTimer(0, 1)); Assert.Null(ev.QuestionTimer(1, 0));
         Assert.Equal(3, ev.QuestionPoints(0, 0)); Assert.Null(ev.QuestionPoints(0, 1)); Assert.Null(ev.QuestionPoints(5, 5));
@@ -52,5 +54,6 @@ public class QuestionOverridesTest
         Assert.Equal(45, back.QuestionTimer(0, 1)); Assert.Null(back.QuestionTimer(0, 0));
         Assert.Equal(3, back.QuestionPoints(0, 0)); Assert.Empty(back.RoundQuestionPoints[1]);
         Assert.Equal("Say KEE-ah-noo", back.QuestionNote(0, 0)); Assert.Null(back.QuestionNote(0, 1)); Assert.Empty(back.RoundQuestionNotes[1]);
+        Assert.True(back.QuestionPoll(0, 1)); Assert.False(back.QuestionPoll(0, 0)); Assert.Empty(back.RoundQuestionPolls[1]);
     }
 }

@@ -46,7 +46,7 @@ public sealed class LiveHostViewModel : ObservableObject
     public string? PictureUrl => ShowPicture ? Host.Current!.ImageUrl : null;
     public double PictureHeight => Host.Revealed ? 190 : 300;
     public bool HasVotes => Host.Net.AnswersSnapshot().Count > 0;
-    public bool ShowTally => Elements.Shows("tally") && Host.Current?.Options is { Count: > 0 } && (HasVotes || Host.Revealed);
+    public bool ShowTally => (Elements.Shows("tally") || Host.CurrentIsPoll) && Host.Current?.Options is { Count: > 0 } && (HasVotes || Host.Revealed);   // A2.10: a poll IS its tally
     /// Votes per option, from the room's submissions.
     public IReadOnlyList<int> OptionTallies
     {
@@ -234,7 +234,8 @@ public sealed class LiveHostViewModel : ObservableObject
     // Round-intro moment (3.40): the first question of a round gets a big title band.
     public bool ShowRoundIntro => !Host.Revealed && Host.QuestionInRound.N == 1;
     // Reveal choreography (3.38): the correct option index once revealed (else null).
-    public int? RevealCorrectIndex => Host.Revealed && Host.Current is { } q ? q.CorrectIndex : null;
+    public int? RevealCorrectIndex => Host.Revealed && !Host.CurrentIsPoll && Host.Current is { } q ? q.CorrectIndex : null;   // a poll lights no "right" bar
+    public bool IsPoll => Host.CurrentIsPoll;
     public string? CurrentRoundNote => Host.CurrentRoundNote;
     /// The clip attached to the question on screen (audio/video round), or null.
     public string? CurrentClipPath => Host.CurrentClipPath;

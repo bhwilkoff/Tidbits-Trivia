@@ -399,8 +399,8 @@ struct LiveJoinView: View {
 
     private func optionButton(_ i: Int, _ opt: String, p: LiveRoom.Pub, revealed: Bool) -> some View {
         let chosen = client.chosen == i
-        let correct = revealed && p.answerIndex == i
-        let wrong = revealed && chosen && p.answerIndex != i
+        let correct = revealed && p.poll != true && p.answerIndex == i
+        let wrong = revealed && p.poll != true && chosen && p.answerIndex != i
         let fill: Color = correct ? Tidbits.Palette.mint : wrong ? Color(red: 0.95, green: 0.82, blue: 0.80) : chosen ? Tidbits.Palette.blue.opacity(0.18) : .white
         return Button { Task { await client.submit(choice: i) } } label: {
             HStack(spacing: 12) {
@@ -428,6 +428,7 @@ struct LiveJoinView: View {
             ? (revealed ? ("The host has the answer.", Tidbits.Palette.inkSoft)
                : client.hasAnswered ? ("Buzzed — wait for the host.", Tidbits.Palette.mint)
                : ("First to buzz answers out loud.", Tidbits.Palette.inkSoft))
+            : revealed && p.poll == true ? ("Thanks for voting — the room's pick is on the big screen.", Tidbits.Palette.mint)   // A2.10
             : revealed
             ? (p.options == nil   // a typed / numeric / ordered answer is scored by the HOST — nil == nil read as "Correct!" on an unanswered Name-It
                ? (client.hasAnswered ? ("Answer sent — the host scores it.", Tidbits.Palette.mint) : ("No answer submitted.", Tidbits.Palette.inkSoft))

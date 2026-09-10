@@ -58,6 +58,10 @@ public sealed record LiveEvent
     [JsonPropertyName("roundQuestionPoints")] public IReadOnlyList<IReadOnlyList<int>> RoundQuestionPoints { get; init; } = new List<IReadOnlyList<int>>();
     /// 3.60 (A2.9): a host note for ONE question, index-aligned like the overrides ("" = none). Cockpit-only.
     [JsonPropertyName("roundQuestionNotes")] public IReadOnlyList<IReadOnlyList<string>> RoundQuestionNotes { get; init; } = new List<IReadOnlyList<string>>();
+    /// A2.10 / 3.64: which questions are POLLS (index-aligned; absent = none).
+    [JsonPropertyName("roundQuestionPolls")] public IReadOnlyList<IReadOnlyList<bool>> RoundQuestionPolls { get; init; } = new List<IReadOnlyList<bool>>();
+    public bool QuestionPoll(int i, int q) =>
+        i >= 0 && i < RoundQuestionPolls.Count && q >= 0 && q < RoundQuestionPolls[i].Count && RoundQuestionPolls[i][q];
     public string? QuestionNote(int i, int q) =>
         i >= 0 && i < RoundQuestionNotes.Count && q >= 0 && q < RoundQuestionNotes[i].Count && RoundQuestionNotes[i][q].Trim().Length > 0
             ? RoundQuestionNotes[i][q].Trim() : null;

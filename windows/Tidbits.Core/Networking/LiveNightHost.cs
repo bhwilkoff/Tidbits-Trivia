@@ -32,6 +32,10 @@ public sealed class LiveNightHost : ObservableObject
     public IReadOnlyList<IReadOnlyList<int>> QuestionTimers { get; set; } = new List<IReadOnlyList<int>>();
     public IReadOnlyList<IReadOnlyList<int>> QuestionPoints { get; set; } = new List<IReadOnlyList<int>>();
     public IReadOnlyList<IReadOnlyList<string>> QuestionNotes { get; set; } = new List<IReadOnlyList<string>>();
+    public IReadOnlyList<IReadOnlyList<bool>> QuestionPolls { get; set; } = new List<IReadOnlyList<bool>>();
+    /// A2.10: this question is a poll — the room votes, nobody scores.
+    public bool CurrentIsPoll => Current?.RoundIndex is int ri && ri >= 0 && ri < QuestionPolls.Count
+        && PositionInRound < QuestionPolls[ri].Count && QuestionPolls[ri][PositionInRound];
     /// 3.60: the host's note for THIS question (cockpit only), or null.
     public string? CurrentQuestionNote
     {
@@ -837,14 +841,15 @@ public sealed class LiveNightHost : ObservableObject
             QNum = inR.N, QTotal = inR.Of,
             Phase = Revealed ? LiveRoom.Phase.Reveal : LiveRoom.Phase.Question,
             Prompt = q.Prompt, Options = mcq ? q.Options : null, Format = fmt,
-            AnswerIndex = Revealed && mcq ? q.CorrectIndex : null,
+            AnswerIndex = Revealed && mcq && !CurrentIsPoll ? q.CorrectIndex : null,
+            Poll = CurrentIsPoll ? true : null,   // A2.10: the room votes; no right answer is revealed
             ImageUrl = LiveMediaStore.PublishPicture(q.ImageUrl).Fallback,   // §5.3: the https twin, or a SMALL data URL
             Picture = CurrentPicture,                                        // Decision 060: the full picture, once its node is in the room
             // The learning payoff, reveal only: the story and its Wikipedia source. The
             // Windows host had published neither — only its own projector showed the story.
             Story = Revealed && !string.IsNullOrWhiteSpace(q.Explanation) ? q.Explanation.Trim() : null,
             Source = Revealed && !string.IsNullOrWhiteSpace(q.SourceTitle) ? new LiveRoom.Source { Title = q.SourceTitle.Trim(), Url = q.SourceUrl } : null,
-            Answer = Revealed ? LiveScoring.AnswerLine(q) : null,   // the answer as a line, every format — for the wrap
+            Answer = Revealed && !CurrentIsPoll ? LiveScoring.AnswerLine(q) : null,   // the answer as a line, every format — for the wrap
             Difficulty = q.Difficulty,
             Numeric = q.Closest is { } c ? new LiveRoom.Numeric { Min = c.Min, Max = c.Max, Step = c.Step, Unit = c.Unit } : null,
             OrderItems = q.Ordering is not null ? _shuffledOrder : null,
@@ -874,13 +879,13 @@ public sealed class LiveNightHost : ObservableObject
         // A3.8: what each team is PAID here goes on the answer sheet, counted as it is
         // paid (the room echoes a score write back later).
         var paid = new Dictionary<string, int>();
-        try { await ScoreAnswers(q, answers, paid); }
+        try { if (!CurrentIsPoll) await ScoreAnswers(q, answers, paid); }   // A2.10: a poll pays nobody, but it is on the sheet
         finally
         {
             var names = Net.JoinedList().ToDictionary(j => j.Id, j => j.Name);
             var lines = answers.Select(kv => new LiveAnswerRecord.Line(kv.Key, names.GetValueOrDefault(kv.Key, kv.Key),
                 LiveAnswerRecord.Submitted(q, kv.Value), paid.GetValueOrDefault(kv.Key))).ToList();
-            AnswerLog.Add(new LiveAnswerRecord(LiveRoom.Qid(q.RoundIndex ?? 0, Index), RoundNumber, QuestionInRound.N, q.Prompt, LiveScoring.AnswerLine(q), lines));
+            AnswerLog.Add(new LiveAnswerRecord(LiveRoom.Qid(q.RoundIndex ?? 0, Index), RoundNumber, QuestionInRound.N, q.Prompt, CurrentIsPoll ? "(poll)" : LiveScoring.AnswerLine(q), lines));
         }
     }
 

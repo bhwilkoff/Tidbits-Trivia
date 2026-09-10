@@ -306,8 +306,8 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     p.numeric != null -> NumericAnswer(p.numeric, p.qid, locked) { submitFields(mapOf("number" to it)) }
                     p.options != null -> p.options.forEachIndexed { i, opt ->
                         val isChosen = chosen == i
-                        val correct = revealed && p.answerIndex == i
-                        val wrong = revealed && isChosen && p.answerIndex != i
+                        val correct = revealed && !p.poll && p.answerIndex == i
+                        val wrong = revealed && !p.poll && isChosen && p.answerIndex != i
                         OptionRow(i, opt, isChosen, correct, wrong, enabled = !locked) { submit(i) }
                         Spacer(Modifier.height(12.dp))
                     }
@@ -326,6 +326,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     p.buzz && revealed -> "The host has the answer." to soft
                     p.buzz && submittedQid == p.qid -> "Buzzed — wait for the host." to Pops.mint
                     p.buzz -> "First to buzz answers out loud." to soft
+                    revealed && p.poll -> "Thanks for voting — the room's pick is on the big screen." to Pops.mint   // A2.10
                     revealed && chosen == p.answerIndex -> "Correct!" to Pops.mint
                     revealed && chosen == null -> "No answer submitted." to soft
                     revealed -> "Not this time." to Pops.coral

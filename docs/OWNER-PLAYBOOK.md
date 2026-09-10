@@ -419,3 +419,5 @@ Associated Domains capability. Three ways out, in the order I'd pick them:
 I would take (1) when there's an appetite for a DNS change, and (3) until then.
 This is the only launch item where the blocker is infrastructure rather than a
 click.
+
+- **2026-09-09 — the QA iPhone 12 has an iOS Screen Time limit on Tidbits.** The bench harness saw "Time Limit — You've reached your limit on Tidbits" mid-run; devicectl cannot dismiss it. Settings ▸ Screen Time ▸ App Limits on that phone: remove Tidbits (or approve "Ask For More Time").

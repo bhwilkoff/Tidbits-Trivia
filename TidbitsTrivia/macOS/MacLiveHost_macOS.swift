@@ -69,6 +69,8 @@ final class LiveHostSession {
     var currentPoints: Int { currentQuestionPoints ?? pointsPerCorrect }
     /// A2.9: the host's note for THIS question (cockpit only).
     var currentQuestionNote: String? { currentSlot.flatMap { LiveEvent.note(event.rounds[$0.ri].questionNotes, $0.qi) } }
+    /// A2.10: this question is a poll — the room votes, nobody scores.
+    var currentIsPoll: Bool { currentSlot.map { LiveEvent.isPoll(event.rounds[$0.ri].questionPolls, $0.qi) } ?? false }
     /// Decision 060: the current question's clip as the ROOM is given it (an
     /// https link or a `room:<id>` node reference), set by the host container
     /// once the node is in place; nil until then, and on a question without one.
@@ -144,7 +146,9 @@ final class LiveHostSession {
         guard let slot = currentSlot else { return }
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { return }
-        var acc = event.rounds[slot.ri].questions[slot.qi].accepted ?? []
+        // Only a typed-answer question has an accepted list to grow; a ruling on a
+        // choice question (or a poll) would turn it INTO a typed one.
+        guard var acc = event.rounds[slot.ri].questions[slot.qi].accepted else { return }
         guard !GameEngine.matchesAccepted(t, acc) else { return }
         acc.append(t)
         event.rounds[slot.ri].questions[slot.qi].accepted = acc
@@ -421,6 +425,7 @@ final class LiveHostSession {
             p.answer = LiveNightHost.answerLine(q)   // the answer as a line, every format — for the wrap
         }
         p.difficulty = q.difficulty
+        if currentIsPoll { p.poll = true; p.answerIndex = nil; p.answer = nil }   // A2.10: there is no right answer to reveal
         return p
     }
 }
@@ -433,6 +438,7 @@ final class LiveHostSession {
 /// team-dedup as the reveal scorer, so a table with two phones is paid once.
 @MainActor
 func liveAcceptFromEveryone(_ typed: String, _ q: Question, session: LiveHostSession, net: LiveHostNet) async {
+    guard q.accepted != nil, !session.currentIsPoll else { return }   // a ruling is for typed answers; a poll pays nobody
     let scorable = LiveTeamRoster.scorableUIDs(members: net.members,
                                                answeredAt: net.answers.mapValues { $0.sv ?? $0.ts })
     let uids = LiveNightHost.typedAlike(typed, answers: net.answers.filter { scorable.contains($0.key) },
@@ -683,6 +689,7 @@ struct LiveHostContainer_macOS: View {
         guard let q = session.current else { return }
         guard !session.scoredIndices.contains(session.index) else { return }   // adaptability: score each question ONCE
         session.scoredIndices.insert(session.index)
+        let poll = session.currentIsPoll   // A2.10: the room voted; nobody is paid
         let wagerRound = session.currentRoundIsWager
         let speedRound = session.currentRoundIsSpeed
         var speedCorrect: [(uid: String, ts: Int, pts: Int)] = []
@@ -706,8 +713,9 @@ struct LiveHostContainer_macOS: View {
             }
             session.answerLog.append(LiveAnswerRecord(qid: LiveRoom.qid(round: q.roundIndex ?? 0, question: session.index),
                                                       round: session.roundNumber, number: inR.n, prompt: q.prompt,
-                                                      answer: LiveNightHost.answerLine(q), lines: lines))
+                                                      answer: poll ? "(poll)" : LiveNightHost.answerLine(q), lines: lines))
         }
+        if poll { return }
         for (uid, ans) in net.answers where scorable.contains(uid) {
             let pts = LiveNightHost.score(q, ans, shuffledOrder: session.shuffledOrder,
                                           shuffledValues: session.shuffledValues, mcqPoints: session.currentPoints)
@@ -982,6 +990,10 @@ struct LiveHostView_macOS: View {
                         Text(note).font(.callout).foregroundStyle(Tidbits.Palette.blue).fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(8).background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.blue.opacity(0.12)))
+                }
+                if session.currentIsPoll {   // A2.10
+                    Label("Poll — the room votes, nobody scores", systemImage: "chart.bar.fill")
+                        .font(.callout).foregroundStyle(Tidbits.Palette.coral)
                 }
                 if let note = session.currentQuestionNote {   // A2.9: the host's cue for THIS question
                     HStack(alignment: .top, spacing: 6) {
@@ -1537,13 +1549,13 @@ struct LiveHostView_macOS: View {
     }
 
     @ViewBuilder private var answerDistribution: some View {
-        if !session.revealed, let q = session.current, let opts = session.currentPub().options, !opts.isEmpty {
+        if !session.revealed || session.currentIsPoll, let q = session.current, let opts = session.currentPub().options, !opts.isEmpty {
             let counts = optionCounts(opts.count)
             let total = max(1, counts.reduce(0, +))
             VStack(alignment: .leading, spacing: 5) {
                 Text("LIVE ANSWERS").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 ForEach(Array(opts.enumerated()), id: \.offset) { i, opt in
-                    let isCorrect = opt == q.correctAnswer
+                    let isCorrect = !session.currentIsPoll && opt == q.correctAnswer
                     HStack(spacing: 8) {
                         Text(opt).font(Tidbits.TypeRamp.l5).foregroundStyle(isCorrect ? Tidbits.Palette.mint : Tidbits.Palette.ink)
                             .frame(width: 180, alignment: .leading).lineLimit(1)

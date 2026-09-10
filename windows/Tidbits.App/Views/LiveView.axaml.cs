@@ -206,6 +206,7 @@ public partial class LiveView : UserControl
     private readonly Dictionary<string, int> _qTimers = new();
     private readonly Dictionary<string, int> _qPoints = new();
     private readonly Dictionary<string, string> _qNotes = new();   // 3.60: the host's cue per question
+    private readonly HashSet<string> _qPolls = new();   // 3.64: polls — the room votes, nobody scores
     private readonly System.Collections.Generic.HashSet<int> _expandedRounds = new();
     private static readonly int[] TimerChoices = { 0, 30, 45, 60, 90, 120 };
     private static int TimerIndex(int seconds) => System.Math.Max(0, System.Array.IndexOf(TimerChoices, seconds));
@@ -507,6 +508,8 @@ public partial class LiveView : UserControl
                 Text = AnswerSummary(q, kind), FontSize = 12, Opacity = 0.62,
                 TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
             });
+            if (_qPolls.Contains(q.Id))   // 3.64
+                text.Children.Add(new TextBlock { Text = "Poll · the room votes, nobody scores", FontSize = 12, FontWeight = Avalonia.Media.FontWeight.Bold, Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#FF5C35")) });
             if (_qNotes.GetValueOrDefault(q.Id) is { Length: > 0 } cue)   // 3.60: the host's cue
                 text.Children.Add(new TextBlock { Text = "💬 " + cue, FontSize = 12, Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0047FF")), TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis });
             var qTimer = _qTimers.GetValueOrDefault(q.Id); var qPts = _qPoints.GetValueOrDefault(q.Id);
@@ -612,6 +615,12 @@ public partial class LiveView : UserControl
                 pointsMenu.Items.Add(item);
             }
             moreQ.Items.Add(timerMenu); moreQ.Items.Add(pointsMenu);
+            if (q.Closest is null && q.Ordering is null && q.Matching is null && q.Accepted is null && q.Enumerate is null)   // polls are choice questions
+            {
+                var pollItem = new MenuItem { Header = _qPolls.Contains(q.Id) ? "Make this a scored question again" : "Make this a poll (no right answer)" };
+                pollItem.Click += (_, _) => { if (!_qPolls.Remove(q.Id)) _qPolls.Add(q.Id); RebuildBuilderRounds(); };
+                moreQ.Items.Add(pollItem);
+            }
             var overrideBtn = new Button { Content = "Timer · points", Padding = new Avalonia.Thickness(10, 4), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0), Flyout = moreQ };
             ToolTip.SetTip(overrideBtn, "A timer or a points value for this question alone");
             AutomationProperties.SetName(overrideBtn, $"Timer and points for question {qi + 1} of round {roundIndex + 1}");
@@ -871,6 +880,7 @@ public partial class LiveView : UserControl
         RoundQuestionTimers = _questions.Select(r => (IReadOnlyList<int>)r.Select(q => _qTimers.GetValueOrDefault(q.Id)).ToList()).ToList(),
         RoundQuestionPoints = _questions.Select(r => (IReadOnlyList<int>)r.Select(q => _qPoints.GetValueOrDefault(q.Id)).ToList()).ToList(),
         RoundQuestionNotes = _questions.Select(r => (IReadOnlyList<string>)r.Select(q => _qNotes.GetValueOrDefault(q.Id) ?? "").ToList()).ToList(),
+        RoundQuestionPolls = _questions.Select(r => (IReadOnlyList<bool>)r.Select(q => _qPolls.Contains(q.Id)).ToList()).ToList(),
     };
 
     /// Load an event into the builder fields (import, or picking a saved event).
@@ -883,7 +893,7 @@ public partial class LiveView : UserControl
         WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
         WagerFinalCheck.IsChecked = ev.WagerFinalRound;
         _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear(); _boards.Clear();
-        _qTimers.Clear(); _qPoints.Clear(); _qNotes.Clear();
+        _qTimers.Clear(); _qPoints.Clear(); _qNotes.Clear(); _qPolls.Clear();
         for (int i = 0; i < ev.Rounds.Count; i++)
         {
             _rounds.Add(ev.Rounds[i]);
@@ -899,6 +909,7 @@ public partial class LiveView : UserControl
                 if (ev.QuestionTimer(i, q) is { } t) _qTimers[ev.QuestionsFor(i)[q].Id] = t;
                 if (ev.QuestionPoints(i, q) is { } pts) _qPoints[ev.QuestionsFor(i)[q].Id] = pts;
                 if (ev.QuestionNote(i, q) is { } cue) _qNotes[ev.QuestionsFor(i)[q].Id] = cue;
+                if (ev.QuestionPoll(i, q)) _qPolls.Add(ev.QuestionsFor(i)[q].Id);
             }
         }
         RebuildBuilderRounds();

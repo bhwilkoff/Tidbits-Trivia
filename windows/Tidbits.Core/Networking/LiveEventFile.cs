@@ -70,6 +70,7 @@ public static class LiveEventFile
         [JsonPropertyName("questionTimers")] public IReadOnlyList<int?>? QuestionTimers { get; init; }
         [JsonPropertyName("questionPoints")] public IReadOnlyList<int?>? QuestionPoints { get; init; }
         [JsonPropertyName("questionNotes")] public IReadOnlyList<string?>? QuestionNotes { get; init; }
+        [JsonPropertyName("questionPolls")] public IReadOnlyList<bool?>? QuestionPolls { get; init; }
     }
 
     public sealed class FileFormatException(string message) : Exception(message);
@@ -112,6 +113,8 @@ public static class LiveEventFile
                 Questions = qs,
                 QuestionTimers = Portable(ev.RoundQuestionTimers, i, qs.Count),
                 QuestionPoints = Portable(ev.RoundQuestionPoints, i, qs.Count),
+                QuestionPolls = i < ev.RoundQuestionPolls.Count && ev.RoundQuestionPolls[i].Any(b => b)
+                    ? Enumerable.Range(0, qs.Count).Select(q => ev.QuestionPoll(i, q) ? (bool?)true : null).ToList() : null,
                 QuestionNotes = i < ev.RoundQuestionNotes.Count && ev.RoundQuestionNotes[i].Any(n => n.Trim().Length > 0)
                     ? Enumerable.Range(0, qs.Count).Select(q => ev.QuestionNote(i, q)).ToList() : null,
             });
@@ -180,6 +183,7 @@ public static class LiveEventFile
         var qTimers = new List<IReadOnlyList<int>>();
         var qPoints = new List<IReadOnlyList<int>>();
         var qNotes = new List<IReadOnlyList<string>>();
+        var qPolls = new List<IReadOnlyList<bool>>();
         bool wagerFinal = false;
 
         for (int i = 0; i < ev.Rounds.Count; i++)
@@ -195,6 +199,7 @@ public static class LiveEventFile
             qTimers.Add(Stored(r.QuestionTimers));
             qPoints.Add(Stored(r.QuestionPoints));
             qNotes.Add(r.QuestionNotes is { } qn && qn.Any(n => !string.IsNullOrWhiteSpace(n)) ? qn.Select(n => n ?? "").ToList() : new List<string>());
+            qPolls.Add(r.QuestionPolls is { } qp && qp.Any(b => b == true) ? qp.Select(b => b == true).ToList() : new List<bool>());
             if (r.IsWager == true && i == ev.Rounds.Count - 1) wagerFinal = true;
         }
 
@@ -211,6 +216,7 @@ public static class LiveEventFile
             RoundQuestionTimers = qTimers,
             RoundQuestionPoints = qPoints,
             RoundQuestionNotes = qNotes,
+            RoundQuestionPolls = qPolls,
             WagerFinalRound = wagerFinal,
             Sponsor = string.IsNullOrEmpty(ev.Sponsor) ? null : ev.Sponsor,
             BrandHex = string.IsNullOrEmpty(ev.BrandHex) ? null : ev.BrandHex,

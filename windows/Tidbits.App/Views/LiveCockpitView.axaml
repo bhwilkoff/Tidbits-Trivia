@@ -75,6 +75,7 @@
                     <Border IsVisible="{Binding HasRoundNote}" Background="#22FFC93C" CornerRadius="8" Padding="10,7">
                         <TextBlock Text="{Binding CurrentRoundNote, StringFormat='📝 {0}'}" TextWrapping="Wrap" FontWeight="SemiBold"/>
                     </Border>
+                    <TextBlock IsVisible="{Binding IsPoll}" Text="Poll — the room votes, nobody scores" Classes="caption" Foreground="#FF5C35" FontWeight="Bold"/>
                     <!-- 3.60: the host's cue for THIS question (never published). -->
                     <Border IsVisible="{Binding HasQuestionNote}" Background="#220047FF" CornerRadius="8" Padding="10,7">
                         <TextBlock Text="{Binding CurrentQuestionNote, StringFormat='💬 {0}'}" TextWrapping="Wrap" FontWeight="SemiBold"/>

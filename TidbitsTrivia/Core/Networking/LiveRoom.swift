@@ -85,6 +85,10 @@ enum LiveRoom {
         /// The question's difficulty (1…5), always published, so a joiner can tell
         /// "tough ones you nailed" from the rest at the wrap. nil from an older host.
         var difficulty: Int? = nil
+        /// A2.10 (2026-09-09): a POLL — the room votes, there is no right answer and
+        /// nobody scores. On reveal the host publishes NO answerIndex / answer; a
+        /// joiner says "thanks for voting" instead of a verdict. Additive.
+        var poll: Bool? = nil
     }
 
     nonisolated struct Source: Codable, Equatable {

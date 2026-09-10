@@ -157,6 +157,8 @@ public sealed class LivePlayerViewModel : ObservableObject
         }
     }
     public bool HasRevealAnswer => RevealAnswerLine is not null;
+    /// A2.10: a poll's reveal thanks the room instead of naming an answer.
+    public bool IsPollReveal => ShowReveal && Client.Pub?.Poll == true;
     public string? Story => Client.Pub?.Story;
     public bool HasStory => ShowReveal && !string.IsNullOrEmpty(Client.Pub?.Story);
     /// The charter: where the fact came from (reveal only).

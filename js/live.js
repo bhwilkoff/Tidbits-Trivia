@@ -408,7 +408,8 @@ function playHTML() {
   const revealed = p.phase === 'reveal';
   const answered = S.submittedQid === p.qid;
   const status = revealed
-    ? `<div class="live-note ok">Answer revealed — check your score.</div>`
+    ? (p.poll ? `<div class="live-note ok">Thanks for voting — the room's pick is on the big screen.</div>`
+              : `<div class="live-note ok">Answer revealed — check your score.</div>`)
     : (answered ? `<div class="live-note ok">Locked in — waiting for the reveal…</div>`
        : p.locked ? `<div class="live-note" style="color:#FF5C35">Answers locked — pencils down!</div>`
        : `<div class="live-note">Answer below.</div>`);
@@ -473,8 +474,8 @@ function answerHTML(p, revealed) {
   if (p.options) {
     return `<div class="live-opts">${p.options.map((o, i) => {
       const chosen = S.chosen === i;
-      const correct = revealed && p.answerIndex === i;
-      const wrong = revealed && chosen && p.answerIndex !== i;
+      const correct = revealed && !p.poll && p.answerIndex === i;
+      const wrong = revealed && !p.poll && chosen && p.answerIndex !== i;
       const cls = ['live-opt', chosen ? 'chosen' : '', correct ? 'correct' : '', wrong ? 'wrong' : ''].join(' ');
       return `<button class="${cls}" data-opt="${i}" ${locked ? 'disabled' : ''}><span class="live-optnum">${i + 1}</span>${esc(o)}</button>`;
     }).join('')}</div>`;

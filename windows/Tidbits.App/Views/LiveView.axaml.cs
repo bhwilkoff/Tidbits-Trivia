@@ -205,6 +205,7 @@ public partial class LiveView : UserControl
     /// remove and move never have to keep a parallel list in step (0 = default).
     private readonly Dictionary<string, int> _qTimers = new();
     private readonly Dictionary<string, int> _qPoints = new();
+    private readonly Dictionary<string, string> _qNotes = new();   // 3.60: the host's cue per question
     private readonly System.Collections.Generic.HashSet<int> _expandedRounds = new();
     private static readonly int[] TimerChoices = { 0, 30, 45, 60, 90, 120 };
     private static int TimerIndex(int seconds) => System.Math.Max(0, System.Array.IndexOf(TimerChoices, seconds));
@@ -473,6 +474,8 @@ public partial class LiveView : UserControl
                 Text = AnswerSummary(q, kind), FontSize = 12, Opacity = 0.62,
                 TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
             });
+            if (_qNotes.GetValueOrDefault(q.Id) is { Length: > 0 } cue)   // 3.60: the host's cue
+                text.Children.Add(new TextBlock { Text = "💬 " + cue, FontSize = 12, Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0047FF")), TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis });
             var qTimer = _qTimers.GetValueOrDefault(q.Id); var qPts = _qPoints.GetValueOrDefault(q.Id);
             if (qTimer > 0 || qPts > 0)   // 3.59: this question's own timer / points
             {
@@ -510,11 +513,14 @@ public partial class LiveView : UserControl
             edit.Click += async (_, _) =>
             {
                 string? newClip = null; bool clipChanged = false;
+                string? newNote = null;
                 var updated = await LiveQuestionEditorDialog.ShowAsync(q, kind, $"Round {roundIndex + 1}, question {qi + 1}",
-                    ClipAt(roundIndex, qi), path => { newClip = path; clipChanged = true; });
+                    ClipAt(roundIndex, qi), path => { newClip = path; clipChanged = true; },
+                    _qNotes.GetValueOrDefault(q.Id), n => newNote = n);
                 if (updated is not null)
                 {
                     _questions[roundIndex][qi] = updated;
+                    if (newNote is not null) { if (newNote.Length == 0) _qNotes.Remove(updated.Id); else _qNotes[updated.Id] = newNote; }
                     if (clipChanged) SetClip(roundIndex, qi, newClip);
                     SyncRoundCount(roundIndex); RebuildBuilderRounds();
                 }
@@ -618,12 +624,14 @@ public partial class LiveView : UserControl
         {
             var cat = (CategoryPicker.SelectedItem as TriviaCategory)?.Id ?? "mixed";
             string? newClip = null; bool clipChanged = false;
+            string? newNote = null;
             var made = await LiveQuestionEditorDialog.ShowAsync(
                 LiveQuestionEditorDialog.Blank(kind, cat), kind, $"New question in round {roundIndex + 1}",
-                null, path => { newClip = path; clipChanged = true; });
+                null, path => { newClip = path; clipChanged = true; }, null, n => newNote = n);
             if (made is not null)
             {
                 _questions[roundIndex].Add(made);
+                if (!string.IsNullOrEmpty(newNote)) _qNotes[made.Id] = newNote;
                 if (clipChanged) SetClip(roundIndex, _questions[roundIndex].Count - 1, newClip);
                 SyncRoundCount(roundIndex); RebuildBuilderRounds();
             }
@@ -829,6 +837,7 @@ public partial class LiveView : UserControl
             .ToList(),
         RoundQuestionTimers = _questions.Select(r => (IReadOnlyList<int>)r.Select(q => _qTimers.GetValueOrDefault(q.Id)).ToList()).ToList(),
         RoundQuestionPoints = _questions.Select(r => (IReadOnlyList<int>)r.Select(q => _qPoints.GetValueOrDefault(q.Id)).ToList()).ToList(),
+        RoundQuestionNotes = _questions.Select(r => (IReadOnlyList<string>)r.Select(q => _qNotes.GetValueOrDefault(q.Id) ?? "").ToList()).ToList(),
     };
 
     /// Load an event into the builder fields (import, or picking a saved event).
@@ -841,7 +850,7 @@ public partial class LiveView : UserControl
         WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
         WagerFinalCheck.IsChecked = ev.WagerFinalRound;
         _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear(); _boards.Clear();
-        _qTimers.Clear(); _qPoints.Clear();
+        _qTimers.Clear(); _qPoints.Clear(); _qNotes.Clear();
         for (int i = 0; i < ev.Rounds.Count; i++)
         {
             _rounds.Add(ev.Rounds[i]);
@@ -856,6 +865,7 @@ public partial class LiveView : UserControl
             {
                 if (ev.QuestionTimer(i, q) is { } t) _qTimers[ev.QuestionsFor(i)[q].Id] = t;
                 if (ev.QuestionPoints(i, q) is { } pts) _qPoints[ev.QuestionsFor(i)[q].Id] = pts;
+                if (ev.QuestionNote(i, q) is { } cue) _qNotes[ev.QuestionsFor(i)[q].Id] = cue;
             }
         }
         RebuildBuilderRounds();

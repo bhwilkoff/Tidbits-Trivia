@@ -44,6 +44,7 @@ public static class NightHostFactory
                     .ToList(),
             QuestionTimers = branding?.RoundQuestionTimers ?? new List<IReadOnlyList<int>>(),
             QuestionPoints = branding?.RoundQuestionPoints ?? new List<IReadOnlyList<int>>(),
+            QuestionNotes = branding?.RoundQuestionNotes ?? new List<IReadOnlyList<string>>(),
             Sponsor = branding?.Sponsor,
             BrandHex = branding?.BrandHex,
             LeadCaptureUrl = branding?.LeadCaptureUrl,

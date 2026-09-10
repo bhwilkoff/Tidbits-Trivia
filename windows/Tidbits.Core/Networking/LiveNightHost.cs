@@ -31,6 +31,30 @@ public sealed class LiveNightHost : ObservableObject
     /// 3.59: per-question overrides from the builder (index-aligned per round, 0 = default).
     public IReadOnlyList<IReadOnlyList<int>> QuestionTimers { get; set; } = new List<IReadOnlyList<int>>();
     public IReadOnlyList<IReadOnlyList<int>> QuestionPoints { get; set; } = new List<IReadOnlyList<int>>();
+    public IReadOnlyList<IReadOnlyList<string>> QuestionNotes { get; set; } = new List<IReadOnlyList<string>>();
+    /// 3.60: the host's note for THIS question (cockpit only), or null.
+    public string? CurrentQuestionNote
+    {
+        get
+        {
+            if (Current?.RoundIndex is not int ri || ri < 0 || ri >= QuestionNotes.Count) return null;
+            int pos = PositionInRound;
+            var n = pos < QuestionNotes[ri].Count ? QuestionNotes[ri][pos].Trim() : "";
+            return n.Length > 0 ? n : null;
+        }
+    }
+    /// A mid-night edit of the current question's note (3.55 + 3.60).
+    public void SetCurrentNote(string note)
+    {
+        if (Current?.RoundIndex is not int ri || ri < 0) return;
+        int pos = PositionInRound;
+        var rounds = QuestionNotes.Select(r => r.ToList()).ToList();
+        while (rounds.Count <= ri) rounds.Add(new List<string>());
+        while (rounds[ri].Count <= pos) rounds[ri].Add("");
+        rounds[ri][pos] = note.Trim();
+        QuestionNotes = rounds;
+        Notify();
+    }
     private int PositionInRound => Current?.RoundIndex is int ri ? Questions.Take(Index).Count(x => x.RoundIndex == ri) : 0;
     public int? CurrentQuestionTimer => Current?.RoundIndex is int ri ? LiveEvent.Override(QuestionTimers, ri, PositionInRound) : null;
     public int? CurrentQuestionPoints => Current?.RoundIndex is int ri ? LiveEvent.Override(QuestionPoints, ri, PositionInRound) : null;

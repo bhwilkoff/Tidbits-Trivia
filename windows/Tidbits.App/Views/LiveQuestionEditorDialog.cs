@@ -25,7 +25,8 @@ public static class LiveQuestionEditorDialog
     /// clip is not part of the Question); `clipChanged` receives the new store path
     /// on Save (null = removed) and is not called when the host left it alone.
     public static async Task<Question?> ShowAsync(Question question, GameMode format, string title,
-                                                  string? clipPath = null, Action<string?>? clipChanged = null)
+                                                  string? clipPath = null, Action<string?>? clipChanged = null,
+                                                  string? hostNote = null, Action<string>? noteChanged = null)
     {
         var promptBox = new TextBox
         {
@@ -190,6 +191,14 @@ public static class LiveQuestionEditorDialog
         body.Children.Add(Labelled("Picture", picture));
         body.Children.Add(Labelled("Clip (plays on the big screen)", clipRow));
         body.Children.Add(Labelled("Reveal", explanationBox));
+        // 3.60 (A2.9): the host's cue for this question — only they see it.
+        var noteBox = new TextBox
+        {
+            Text = hostNote ?? "", AcceptsReturn = true, TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            MinHeight = 44, PlaceholderText = "A cue for this question — a pronunciation, who to call on, a story to tell",
+        };
+        AutomationProperties.SetName(noteBox, "Host note");
+        body.Children.Add(Labelled("Host note (only you see it)", noteBox));
         body.Children.Add(problem);
 
         var dialog = new FAContentDialog
@@ -225,6 +234,8 @@ public static class LiveQuestionEditorDialog
             }
             result = draft;
             if (clipDirty) clipChanged?.Invoke(pendingClip);
+            var newNote = noteBox.Text?.Trim() ?? "";
+            if (newNote != (hostNote ?? "").Trim()) noteChanged?.Invoke(newNote);
         };
 
         await dialog.ShowAsync();

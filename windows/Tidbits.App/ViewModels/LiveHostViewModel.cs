@@ -250,6 +250,8 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool HasMediaNote => Host.MediaNote is not null;
     public Task CueMedia() => Host.CueMedia();
     public bool HasRoundNote => Host.CurrentRoundNote is not null;
+    public string? CurrentQuestionNote => Host.CurrentQuestionNote;
+    public bool HasQuestionNote => Host.CurrentQuestionNote is not null;
     /// The correct option text (shown big on the projector at reveal).
     public string? RevealAnswer => Host.Current is { } q ? LiveScoring.AnswerLine(q) : null;
     /// The story/fact behind the answer, shown on the big screen at reveal (3.42) —

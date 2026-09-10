@@ -65,6 +65,8 @@ final class LiveHostSession {
     var currentQuestionPoints: Int? { currentSlot.flatMap { LiveEvent.override(event.rounds[$0.ri].questionPoints, $0.qi) } }
     /// What a correct answer is worth right now — the question's override, else the night's setting.
     var currentPoints: Int { currentQuestionPoints ?? pointsPerCorrect }
+    /// A2.9: the host's note for THIS question (cockpit only).
+    var currentQuestionNote: String? { currentSlot.flatMap { LiveEvent.note(event.rounds[$0.ri].questionNotes, $0.qi) } }
     /// Decision 060: the current question's clip as the ROOM is given it (an
     /// https link or a `room:<id>` node reference), set by the host container
     /// once the node is in place; nil until then, and on a question without one.
@@ -107,6 +109,7 @@ final class LiveHostSession {
         var d = QuestionDraft(round.questions[slot.qi])
         d.audioClipName = QuestionDraft.clipName(round.audioBookmarks, slot.qi)
         d.videoClipName = QuestionDraft.clipName(round.videoBookmarks, slot.qi)
+        d.hostNote = LiveEvent.note(round.questionNotes, slot.qi) ?? ""
         return d
     }
 
@@ -115,8 +118,15 @@ final class LiveHostSession {
     /// only when the shuffled content changed (a typo fix must not re-deal an
     /// ordering the room is halfway through), and a clip change re-offers the
     /// media. The caller republishes.
-    func replaceCurrent(_ q: Question, audio: QuestionDraft.ClipChange, video: QuestionDraft.ClipChange) {
+    func replaceCurrent(_ q: Question, audio: QuestionDraft.ClipChange, video: QuestionDraft.ClipChange, note: String? = nil) {
         guard let slot = currentSlot else { return }
+        if let note {
+            let count = event.rounds[slot.ri].questions.count
+            var l = event.rounds[slot.ri].questionNotes ?? []
+            while l.count < count { l.append("") }
+            l[slot.qi] = note.trimmingCharacters(in: .whitespacesAndNewlines)
+            event.rounds[slot.ri].questionNotes = l.contains(where: { !$0.isEmpty }) ? l : nil
+        }
         let old = event.rounds[slot.ri].questions[slot.qi]
         event.rounds[slot.ri].questions[slot.qi] = q
         if q.ordering != old.ordering { shuffledOrder = q.ordering?.shuffled() ?? [] }
@@ -930,6 +940,14 @@ struct LiveHostView_macOS: View {
                     }
                     .padding(8).background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.blue.opacity(0.12)))
                 }
+                if let note = session.currentQuestionNote {   // A2.9: the host's cue for THIS question
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "text.bubble").foregroundStyle(Tidbits.Palette.blue)
+                        Text(note).font(.callout).foregroundStyle(Tidbits.Palette.blue).fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(8).background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.blue.opacity(0.12)))
+                    .accessibilityIdentifier("live.cockpitQuestionNote")
+                }
                 if session.currentRoundIsWager {   // Wave A: wager round indicator
                     Label("Wager round — teams stake points (correct +stake, wrong −stake)", systemImage: "dollarsign.circle.fill")
                         .font(.callout).foregroundStyle(Tidbits.Palette.coral)
@@ -1526,8 +1544,8 @@ struct LiveHostView_macOS: View {
         }
         .sheet(item: $editingCurrent) { draft in
             LiveQuestionEditor_macOS(draft: draft, format: session.currentRoundMode,
-                                     onSave: { q, audio, video in
-                                         session.replaceCurrent(q, audio: audio, video: video)
+                                     onSave: { q, audio, video, note in
+                                         session.replaceCurrent(q, audio: audio, video: video, note: note)
                                          editingCurrent = nil
                                          Task { await net.publish(session.currentPub()) }
                                      },

@@ -47,6 +47,8 @@ struct QuestionDraft: Identifiable {
         case remove
         case set(id: String)
     }
+    /// A2.9: the question's host note — carried beside the Question like the clips (never on the wire).
+    var hostNote: String = ""
     var audioClipName: String? = nil
     var videoClipName: String? = nil
 
@@ -177,14 +179,14 @@ struct QuestionDraft: Identifiable {
 /// controls, Cancel/Save in the footer with Return bound to Save.
 struct LiveQuestionEditor_macOS: View {
     let format: GameMode
-    let onSave: (Question, QuestionDraft.ClipChange, QuestionDraft.ClipChange) -> Void
+    let onSave: (Question, QuestionDraft.ClipChange, QuestionDraft.ClipChange, String) -> Void
     let onCancel: () -> Void
 
     @State private var draft: QuestionDraft
     @FocusState private var promptFocused: Bool
 
     init(question: Question, format: GameMode,
-         onSave: @escaping (Question, QuestionDraft.ClipChange, QuestionDraft.ClipChange) -> Void,
+         onSave: @escaping (Question, QuestionDraft.ClipChange, QuestionDraft.ClipChange, String) -> Void,
          onCancel: @escaping () -> Void) {
         self.format = format
         self.onSave = onSave
@@ -192,7 +194,7 @@ struct LiveQuestionEditor_macOS: View {
         _draft = State(initialValue: QuestionDraft(question))
     }
     init(draft: QuestionDraft, format: GameMode,
-         onSave: @escaping (Question, QuestionDraft.ClipChange, QuestionDraft.ClipChange) -> Void,
+         onSave: @escaping (Question, QuestionDraft.ClipChange, QuestionDraft.ClipChange, String) -> Void,
          onCancel: @escaping () -> Void) {
         self.format = format
         self.onSave = onSave
@@ -263,6 +265,12 @@ struct LiveQuestionEditor_macOS: View {
                         LabeledContent("Source", value: draft.sourceTitle)
                     }
                 }
+                Section("Host note (only you see it)") {   // A2.9
+                    TextField("A cue for this question — a pronunciation, who to call on, a story to tell",
+                              text: $draft.hostNote, axis: .vertical)
+                        .lineLimit(1...4)
+                        .accessibilityIdentifier("live.questionNote")
+                }
             }
             .formStyle(.grouped)
 
@@ -277,7 +285,7 @@ struct LiveQuestionEditor_macOS: View {
                 Spacer()
                 Button("Cancel", role: .cancel) { onCancel() }
                     .keyboardShortcut(.cancelAction)
-                Button("Save") { onSave(draft.build(), draft.audioChange, draft.videoChange) }
+                Button("Save") { onSave(draft.build(), draft.audioChange, draft.videoChange, draft.hostNote) }
                     .keyboardShortcut(.defaultAction)
                     .disabled(!problems.isEmpty)
             }

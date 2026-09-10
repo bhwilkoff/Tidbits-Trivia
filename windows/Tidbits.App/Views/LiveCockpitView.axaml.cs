@@ -144,10 +144,12 @@ public partial class LiveCockpitView : UserControl
     private async void OnEditQuestion(object? sender, RoutedEventArgs e)
     {
         if (Vm is not { } vm || vm.Host.Current is not { } q || vm.ShowBoardScreen) return;
-        string? newClip = null; bool clipChanged = false;
+        string? newClip = null; bool clipChanged = false; string? newNote = null;
         var updated = await LiveQuestionEditorDialog.ShowAsync(q, vm.Host.CurrentKind, "Edit this question",
-            vm.CurrentClipPath, path => { newClip = path; clipChanged = true; });
+            vm.CurrentClipPath, path => { newClip = path; clipChanged = true; },
+            vm.Host.CurrentQuestionNote, n => newNote = n);
         if (updated is null) return;
+        if (newNote is not null) vm.Host.SetCurrentNote(newNote);
         await vm.Host.ReplaceCurrent(updated);
         if (clipChanged) await vm.Host.SetCurrentClip(newClip);
     }

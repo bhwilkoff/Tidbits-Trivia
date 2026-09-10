@@ -32,6 +32,10 @@ struct LiveRound: Identifiable, Codable, Hashable {
     /// round/night default). Optional so every saved event decodes unchanged.
     var questionTimers: [Int]? = nil
     var questionPoints: [Int]? = nil
+    /// A2.9: a host note for ONE question (a cue, a pronunciation, who to call
+    /// on), index-parallel like the overrides; "" = none. Cockpit-only, like the
+    /// round note — never published.
+    var questionNotes: [String]? = nil
     var isSpeed: Bool? = nil            // Wave B: a speed round — correct answers earn a fastest-first bonus
     /// G1: a BUZZ round — the room races to buzz and the FIRST team gets to answer
     /// out loud; the host marks it right or wrong and a wrong buzz reopens it to the
@@ -72,6 +76,11 @@ struct LiveEvent: Identifiable, Codable, Hashable {
 
     var totalQuestions: Int { rounds.reduce(0) { $0 + $1.questions.count } }
     /// A2.8: the override for question `qi` of round `ri`, or nil for the default.
+    static func note(_ list: [String]?, _ qi: Int) -> String? {
+        guard let list, list.indices.contains(qi) else { return nil }
+        let t = list[qi].trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.isEmpty ? nil : t
+    }
     static func override(_ list: [Int]?, _ qi: Int) -> Int? {
         guard let list, list.indices.contains(qi), list[qi] > 0 else { return nil }
         return list[qi]

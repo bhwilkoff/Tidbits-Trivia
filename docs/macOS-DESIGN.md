@@ -132,6 +132,14 @@ the prompt, the timer arms with the override and every scoring path (auto,
 manual mark, accept, buzz) pays it. Stored index-parallel to the questions
 (LIVE-EVENT-FILE §4) so the night travels with them.
 
+A2.9 **A question can carry a host note of its own** (2026-09-09). The round
+note (A-Wave A) is for the round; a pronunciation, a "call on the table by the
+window", a story to tell before the reveal belongs to ONE question. The editor
+has a "Host note (only you see it)" field; the builder row shows it under the
+prompt; the cockpit shows it in its own blue bubble beside the round note (the
+Mac's sit under the prompt, Windows' above it — each shell's idiom). Never on the wire — it is the host's cue, not
+the room's. Stored index-parallel like the overrides (LIVE-EVENT-FILE §2.6).
+
 A2.3 **Round formats (MVP set), Tidbits-native:** MCQ, True/False, Picture,
 Nearest-Wins (numeric — also the tie-break unit), Ordering, Wager (Stake),
 Poll/Majority. Audio round and Fastest-Finger (speed scoring) are Phase B.

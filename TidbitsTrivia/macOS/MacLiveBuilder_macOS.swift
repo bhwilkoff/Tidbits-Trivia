@@ -224,7 +224,7 @@ struct LiveBuilderView_macOS: View {
         }
         .sheet(item: $editing) { ctx in
             LiveQuestionEditor_macOS(draft: ctx.draft, format: ctx.format,
-                                     onSave: { q, audio, video in
+                                     onSave: { q, audio, video, note in
                                          let qi: Int
                                          if let i = ctx.questionIndex,
                                             working.rounds.indices.contains(ctx.roundIndex),
@@ -238,6 +238,7 @@ struct LiveBuilderView_macOS: View {
                                          }
                                          applyClip(audio, video: false, ri: ctx.roundIndex, qi: qi)
                                          applyClip(video, video: true, ri: ctx.roundIndex, qi: qi)
+                                         setNote(ctx.roundIndex, qi, note)
                                          editing = nil
                                      },
                                      onCancel: { editing = nil })
@@ -748,6 +749,9 @@ struct LiveBuilderView_macOS: View {
                     .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
                 let qTimer = LiveEvent.override(working.rounds[ri].questionTimers, qi)
                 let qPoints = LiveEvent.override(working.rounds[ri].questionPoints, qi)
+                if let n = LiveEvent.note(working.rounds[ri].questionNotes, qi) {   // A2.9: the host's cue
+                    Label(n, systemImage: "note.text").font(.caption).foregroundStyle(Tidbits.Palette.blue).lineLimit(1)
+                }
                 if qTimer != nil || qPoints != nil {   // A2.8: this question's own timer / points
                     HStack(spacing: 8) {
                         if let t = qTimer { Label("\(t) s", systemImage: "timer") }
@@ -821,6 +825,7 @@ struct LiveBuilderView_macOS: View {
         var d = QuestionDraft(working.rounds[ri].questions[qi])
         d.audioClipName = clipName(working.rounds[ri].audioBookmarks, qi)
         d.videoClipName = clipName(working.rounds[ri].videoBookmarks, qi)
+        d.hostNote = LiveEvent.note(working.rounds[ri].questionNotes, qi) ?? ""
         return d
     }
 
@@ -918,6 +923,23 @@ struct LiveBuilderView_macOS: View {
         }
         fix(&working.rounds[ri].questionTimers)
         fix(&working.rounds[ri].questionPoints)
+        if var n = working.rounds[ri].questionNotes {
+            if let at = insertAt { n.insert("", at: min(at, n.count)) }
+            if let at = removeAt, n.indices.contains(at) { n.remove(at: at) }
+            if let (a, b) = swap, n.indices.contains(a), n.indices.contains(b) { n.swapAt(a, b) }
+            working.rounds[ri].questionNotes = n.contains(where: { !$0.isEmpty }) ? n : nil
+        }
+    }
+
+    /// A2.9: the host note for one question, index-parallel like the overrides.
+    private func setNote(_ ri: Int, _ qi: Int, _ note: String) {
+        guard working.rounds.indices.contains(ri) else { return }
+        let count = working.rounds[ri].questions.count
+        guard qi < count else { return }
+        var l = working.rounds[ri].questionNotes ?? []
+        while l.count < count { l.append("") }
+        l[qi] = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        working.rounds[ri].questionNotes = l.contains(where: { !$0.isEmpty }) ? l : nil
     }
 
     private func setOverride(_ ri: Int, _ qi: Int, timer: Int? = nil, points: Int? = nil) {

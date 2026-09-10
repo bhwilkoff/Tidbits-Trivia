@@ -309,6 +309,13 @@ struct ResultsView_macOS: View {
     @State private var showBoard = false
 
     private var isTodayDaily: Bool { summary.mode == .daily && summary.dailyDay == nil }
+    /// Hard questions (difficulty ≥ 4) answered correctly — the win worth talking about.
+    private var nailed: [AnsweredQuestion] { summary.answered.filter { $0.isCorrect && $0.question.difficulty >= 4 } }
+    static func howDidYouKnowText(_ a: AnsweredQuestion) -> String {
+        let line = "I knew \"\(a.question.prompt)\" on Tidbits Trivia — it's \(a.question.correctAnswer). How did YOU know that? 🧠"
+        guard let url = QuizSharing.itemURL(for: a.question.id) else { return line }
+        return "\(line)\n\(url.absoluteString)"
+    }
 
     var body: some View {
         ScrollView {
@@ -329,6 +336,26 @@ struct ResultsView_macOS: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.blue.opacity(0.14)))
+                }
+                if !nailed.isEmpty {   // consumer L5 "How did you know that?" — the iOS results screen's section, on the Mac
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label("Tough ones you nailed", systemImage: "sparkles").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                        ForEach(nailed) { a in
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(a.question.prompt).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                                Text("You got it: \(a.question.correctAnswer)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                                ShareLink(item: Self.howDidYouKnowText(a)) {
+                                    Label("How did you know that? · Share", systemImage: "square.and.arrow.up")
+                                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(14)
+                            .chunkyCard(fill: Tidbits.Palette.surface)
+                        }
+                    }
+                    .padding(.top, 8)
                 }
                 if !summary.missed.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {

@@ -75,6 +75,10 @@
                     <Border IsVisible="{Binding HasRoundNote}" Background="#22FFC93C" CornerRadius="8" Padding="10,7">
                         <TextBlock Text="{Binding CurrentRoundNote, StringFormat='📝 {0}'}" TextWrapping="Wrap" FontWeight="SemiBold"/>
                     </Border>
+                    <!-- 3.60: the host's cue for THIS question (never published). -->
+                    <Border IsVisible="{Binding HasQuestionNote}" Background="#220047FF" CornerRadius="8" Padding="10,7">
+                        <TextBlock Text="{Binding CurrentQuestionNote, StringFormat='💬 {0}'}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                    </Border>
                     <!-- `section-header`, NOT `view-heading`. Promoting this to the page
                          title size was my own regression: measured on the real box, a
                          long question then filled the whole body and pushed every

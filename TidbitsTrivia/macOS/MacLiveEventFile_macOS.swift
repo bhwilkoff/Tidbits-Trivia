@@ -62,6 +62,7 @@ enum LiveEventFile {
         /// §2.6: per-question overrides (index-parallel; null = the round default).
         var questionTimers: [Int?]?
         var questionPoints: [Int?]?
+        var questionNotes: [String?]?
     }
 
     enum FileError: LocalizedError {
@@ -130,7 +131,8 @@ enum LiveEventFile {
                                   isWager: r.isWager, isSpeed: r.isSpeed, isBuzz: r.isBuzz,
                                   questions: r.questions,
                                   questionTimers: r.questionTimers.map { $0.map { $0 > 0 ? $0 : nil } },
-                                  questionPoints: r.questionPoints.map { $0.map { $0 > 0 ? $0 : nil } })
+                                  questionPoints: r.questionPoints.map { $0.map { $0 > 0 ? $0 : nil } },
+                                  questionNotes: r.questionNotes.map { $0.map { $0.isEmpty ? nil : $0 } })
                 }))
     }
 
@@ -175,6 +177,7 @@ enum LiveEventFile {
                                   isBuzz: r.isBuzz)
             round.questionTimers = r.questionTimers.flatMap { t in t.contains { ($0 ?? 0) > 0 } ? t.map { $0 ?? 0 } : nil }
             round.questionPoints = r.questionPoints.flatMap { t in t.contains { ($0 ?? 0) > 0 } ? t.map { $0 ?? 0 } : nil }
+            round.questionNotes = r.questionNotes.flatMap { t in t.contains { !($0 ?? "").isEmpty } ? t.map { $0 ?? "" } : nil }
             return round
         }
         return event

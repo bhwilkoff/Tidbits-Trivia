@@ -56,6 +56,11 @@ public sealed record LiveEvent
     /// clips (0 = the default). Additive; old saved events decode unchanged.
     [JsonPropertyName("roundQuestionTimers")] public IReadOnlyList<IReadOnlyList<int>> RoundQuestionTimers { get; init; } = new List<IReadOnlyList<int>>();
     [JsonPropertyName("roundQuestionPoints")] public IReadOnlyList<IReadOnlyList<int>> RoundQuestionPoints { get; init; } = new List<IReadOnlyList<int>>();
+    /// 3.60 (A2.9): a host note for ONE question, index-aligned like the overrides ("" = none). Cockpit-only.
+    [JsonPropertyName("roundQuestionNotes")] public IReadOnlyList<IReadOnlyList<string>> RoundQuestionNotes { get; init; } = new List<IReadOnlyList<string>>();
+    public string? QuestionNote(int i, int q) =>
+        i >= 0 && i < RoundQuestionNotes.Count && q >= 0 && q < RoundQuestionNotes[i].Count && RoundQuestionNotes[i][q].Trim().Length > 0
+            ? RoundQuestionNotes[i][q].Trim() : null;
 
     /// The override for question `q` of round `i`, or null for the default.
     public static int? Override(IReadOnlyList<IReadOnlyList<int>> lists, int i, int q) =>

@@ -61,8 +61,10 @@ in both directions (see the last paragraph).
 6. ~~**Numeric tie-break engine on Windows**~~ — DONE 2026-09-09 (3.58).
 7. ~~**Per-question timer & points overrides**~~ — DONE 2026-09-09 (A2.8 /
    3.59), in the file contract too.
-8. **Per-question host note** (per-round only today). S.
-9. **"How did you know that?"** on macOS and after a live night. S.
+8. ~~**Per-question host note**~~ — DONE 2026-09-09 (A2.9 / 3.60).
+9. **"How did you know that?"** — macOS solo results DONE 2026-09-09; the
+   live-night wrap on every joiner is still open (needs an additive
+   `pub.difficulty` and a per-question record on each joiner). S/M.
 10. **Answer-level data export** (standings only today). S.
 11. **Final-wager tie-break** (both partial). M.
 12. **Drag-to-reorder on Windows** (up/down buttons). S.
@@ -2263,3 +2265,21 @@ the cockpit read "45 s for this one · 3 pts for this one".
 The Windows box: the same file (a 120 s override there, because `winbox.launch` returns ~60 s after the app starts and a 45 s clock had already run out on the first try — the harness, not the host), the builder caption (the ★ glyph drew a box in Inter → dropped), deadline on the wire, 3 each on reveal, and the numeric tie-break dialog over the two tied teams. Versions 1.9.12 / 142 / vc103 / MSIX 1.9.12.0. Next:
 punch list 8 (per-question host note) and 9 ("How did you know that?" on macOS
 and after a live night).
+
+**2026-09-09o — Live loop tick 15: a host note for one question; "Tough
+ones you nailed" on the Mac.** Punch list 8 + half of 9. `questionNotes`
+joins the §2.6 index-parallel family (Mac `LiveRound.questionNotes` with the
+same insert/remove/move bookkeeping; Windows `RoundQuestionNotes`, keyed by
+question id in the builder); the editor on both hosts gained "Host note (only
+you see it)" (Mac: a 4th `onSave` value; Windows: a `noteChanged` callback
+beside `clipChanged`), the builder rows show the cue, the cockpits show it in
+a blue bubble under the prompt beside the round note, and the cockpit's Edit
+question carries it mid-night. The Mac results screen got the iOS "Tough ones
+you nailed" section with its ShareLink (parity row had no macOS column, so
+the gap was silent). **Verified on the glass:** the harness night now carries
+a note — Mac builder caption + cockpit bubble ("Say KEE-ah-noo. Ask who saw it
+in the cinema."), and a correct-answer autopilot Classic game on the Mac ended
+on a results screen listing four tough ones with the share line.
+The Windows box: the same note under the builder row and in the cockpit bubble (Windows keeps its note bubbles above the prompt with the round note; the Mac keeps them below — same verb, each shell's idiom). A harness lesson on the way: a 30 s screenshot round-trip taken BEFORE reading the wire clock pushed the read past a 120 s timer; read the clock first. Versions 1.9.13 / 143 / vc104 / MSIX 1.9.13.0. Next:
+the live-night "tough ones you nailed" wrap across every joiner (pub.difficulty
+additive + per-question record), then punch list 10 (answer-level export).

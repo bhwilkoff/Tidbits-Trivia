@@ -69,6 +69,7 @@ public static class LiveEventFile
         /// §2.6: per-question overrides (index-parallel; null = the round default).
         [JsonPropertyName("questionTimers")] public IReadOnlyList<int?>? QuestionTimers { get; init; }
         [JsonPropertyName("questionPoints")] public IReadOnlyList<int?>? QuestionPoints { get; init; }
+        [JsonPropertyName("questionNotes")] public IReadOnlyList<string?>? QuestionNotes { get; init; }
     }
 
     public sealed class FileFormatException(string message) : Exception(message);
@@ -111,6 +112,8 @@ public static class LiveEventFile
                 Questions = qs,
                 QuestionTimers = Portable(ev.RoundQuestionTimers, i, qs.Count),
                 QuestionPoints = Portable(ev.RoundQuestionPoints, i, qs.Count),
+                QuestionNotes = i < ev.RoundQuestionNotes.Count && ev.RoundQuestionNotes[i].Any(n => n.Trim().Length > 0)
+                    ? Enumerable.Range(0, qs.Count).Select(q => ev.QuestionNote(i, q)).ToList() : null,
             });
         }
         var doc = new Document
@@ -176,6 +179,7 @@ public static class LiveEventFile
         var timers = new List<int>();
         var qTimers = new List<IReadOnlyList<int>>();
         var qPoints = new List<IReadOnlyList<int>>();
+        var qNotes = new List<IReadOnlyList<string>>();
         bool wagerFinal = false;
 
         for (int i = 0; i < ev.Rounds.Count; i++)
@@ -190,6 +194,7 @@ public static class LiveEventFile
             timers.Add(r.TimerSeconds ?? 0);
             qTimers.Add(Stored(r.QuestionTimers));
             qPoints.Add(Stored(r.QuestionPoints));
+            qNotes.Add(r.QuestionNotes is { } qn && qn.Any(n => !string.IsNullOrWhiteSpace(n)) ? qn.Select(n => n ?? "").ToList() : new List<string>());
             if (r.IsWager == true && i == ev.Rounds.Count - 1) wagerFinal = true;
         }
 
@@ -205,6 +210,7 @@ public static class LiveEventFile
             RoundTimers = timers,
             RoundQuestionTimers = qTimers,
             RoundQuestionPoints = qPoints,
+            RoundQuestionNotes = qNotes,
             WagerFinalRound = wagerFinal,
             Sponsor = string.IsNullOrEmpty(ev.Sponsor) ? null : ev.Sponsor,
             BrandHex = string.IsNullOrEmpty(ev.BrandHex) ? null : ev.BrandHex,

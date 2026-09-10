@@ -123,6 +123,7 @@
                         <TextBlock Text="THAT'S A WRAP" Foreground="White" FontWeight="Black" FontSize="12"/>
                     </Border>
                     <TextBlock Text="{Binding FinalScoreLine}" FontSize="22" FontWeight="Black"/>
+                    <TextBlock Text="{Binding CountedLine}" IsVisible="{Binding Counted}" Classes="caption" Opacity="0.75"/>
                     <StackPanel x:Name="RecapPanel" Spacing="8"/>
                 </StackPanel>
 

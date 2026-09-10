@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -109,6 +110,49 @@ public static class PlayerIdentity
     }
 
     public static bool IsDefaultName(string n) => n.StartsWith("Player ", StringComparison.Ordinal);
+
+    /// A finished SOLO game folded into the profile — the port of Swift `recordGame` / JS
+    /// `Identity.recordGame`: accuracy nudges the rating, the day advances the streak, the
+    /// counters sum. Pure, so the same numbers come out on every platform.
+    public static Profile AfterGame(Profile p, int correct, int total, string today, bool live = false)
+    {
+        var rating = total > 0 ? p.Rating.Updated((double)correct / total, weight: live ? 1.5 : 1.0) : p.Rating;
+        var stats = p.Stats with
+        {
+            GamesPlayed = p.Stats.GamesPlayed + 1,
+            QuestionsAnswered = p.Stats.QuestionsAnswered + total,
+            Correct = p.Stats.Correct + correct,
+            LiveNights = p.Stats.LiveNights + (live ? 1 : 0),
+        };
+        return p with { Rating = rating, Streak = p.Streak.Played(today, live), Stats = stats };
+    }
+
+    /// A finished LIVE night — the bridge that makes "solo AND live feed one identity"
+    /// real (port of `recordLiveGame`): a night keeps the streak and grants a freeze even
+    /// when the table never answered on this device; MCQ accuracy nudges the rating only
+    /// when there is some.
+    public static Profile AfterLiveNight(Profile p, int correct, int answered, string today)
+    {
+        var rating = answered > 0 ? p.Rating.Updated((double)correct / answered, weight: 1.5) : p.Rating;
+        var stats = p.Stats with
+        {
+            GamesPlayed = p.Stats.GamesPlayed + 1,
+            QuestionsAnswered = p.Stats.QuestionsAnswered + Math.Max(0, answered),
+            Correct = p.Stats.Correct + Math.Max(0, correct),
+            LiveNights = p.Stats.LiveNights + 1,
+        };
+        return p with { Rating = rating, Streak = p.Streak.Played(today, liveNight: true), Stats = stats };
+    }
+
+    /// "1012 · provisional · 3-day streak · 2 live nights" — the one-line profile summary
+    /// Settings shows on every platform.
+    public static string SummaryLine(Profile p)
+    {
+        var parts = new List<string> { p.Rating.Provisional ? $"Tidbits Rating {(int)p.Rating.Value} · provisional" : $"Tidbits Rating {(int)p.Rating.Value}" };
+        if (p.Streak.Current > 0) parts.Add(p.Streak.Current == 1 ? "1-day streak" : $"{p.Streak.Current}-day streak");
+        if (p.Stats.LiveNights > 0) parts.Add(p.Stats.LiveNights == 1 ? "1 live night" : $"{p.Stats.LiveNights} live nights");
+        return string.Join(" · ", parts);
+    }
 
     /// LOSSLESS merge of a local anon profile into an `account` profile (the survivor).
     public static Profile Merge(Profile a, Profile b)

@@ -381,6 +381,12 @@ there is no regression baseline at all.
 - `scratchpad/e2e_poll.py <mac|windows> web,iphone,dongle` hosts a night whose first
   question is a poll and checks the wire (poll:true, no answer on reveal, nobody
   paid), the joiners' "Thanks for voting" and the projector's tally.
+- `scratchpad/e2e_profile.py` — the Mac hosts (`TIDBITS_LIVE_FINISH_AT`), the box joins
+  (`TIDBITS_LIVE_JOIN` + `TIDBITS_LIVE_DIAG=1`); after `meta/state=ended` it reads
+  `players/{team uid}` and asserts the night counted (liveNights, streak, a freeze), then
+  relaunches the box with `TIDBITS_SETTINGS=1` for the rating line. The Diag lines `night
+  ended` / `night recorded` / `profile write` in launch-hooks.log are the layer-by-layer
+  trace; the first run failed because the joiner's uid was not the profile's.
 - Both hosts: `TIDBITS_LIVE_RENAME=<name>` + `TIDBITS_LIVE_RENAME_AT=<secs>` rename the
   alphabetically first joined team (A3.12); `scratchpad/e2e_rename.py <mac|windows>`
   joins two wire tables and asserts `meta/names/{uid}` names ONLY the first, then

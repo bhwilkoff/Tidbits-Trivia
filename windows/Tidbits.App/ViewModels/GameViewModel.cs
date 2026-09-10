@@ -106,6 +106,10 @@ public sealed class GameViewModel : ObservableObject, IDisposable
     public RecordsStore? Records => _records;
 
     /// The conversation-starter share for a nailed question (web/iOS parity).
+    /// Set once by GameData: every finished solo game feeds the portable identity. A static
+    /// seam (not a ctor param) because the VM is built at five call sites and in tests.
+    public static Action<int, int>? GameRecorded { get; set; }
+
     public static string HowDidYouKnowText(AnsweredQuestion a) =>
         $"I knew \"{a.Question.Prompt}\" on Tidbits Trivia — it's {a.Question.CorrectAnswer}. How did YOU know that?\n"
         + ShareText.ItemUrl(a.Question.Id);
@@ -165,6 +169,7 @@ public sealed class GameViewModel : ObservableObject, IDisposable
         {
             _recorded = true;
             _records?.Record(Engine.Summary);
+            GameRecorded?.Invoke(Engine.Summary.Correct, Engine.Summary.Total);   // the portable profile (rating + streak)
             // Club Expedition (Feature 5): unlike Marathon, a stage IS a normal
             // GameRecord write (above) — this only layers the campaign tracking
             // (pass/fail, next-stage unlock, certificate) on top.

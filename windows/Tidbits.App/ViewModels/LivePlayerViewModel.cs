@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Avalonia.Threading;
@@ -16,7 +17,21 @@ public sealed class LivePlayerViewModel : ObservableObject
     {
         Client = client ?? new LivePlayerClient();
         Client.Changed += () => Dispatcher.UIThread.Post(() => OnPropertyChanged(string.Empty));
+        // The night ended: feed the portable identity (rating + streak + a freeze). The
+        // client raised this event since 1.6.x and nothing had ever subscribed.
+        Client.NightEnded += (correct, answered, _, _) =>
+        {
+            Services.LaunchHooks.Diag($"night ended: correct={correct} answered={answered} recorder={(NightRecorded is null ? "unset" : "set")}");
+            NightRecorded?.Invoke(correct, answered);
+            Dispatcher.UIThread.Post(() => { _counted = true; OnPropertyChanged(string.Empty); });
+        };
     }
+
+    /// Set once by GameData; a static seam for the same reason as GameViewModel.GameRecorded.
+    public static Action<int, int>? NightRecorded { get; set; }
+    private bool _counted;
+    public bool Counted => _counted;
+    public string CountedLine => NightRecorded is null ? "" : "Counted toward your streak and Tidbits Rating.";
 
     // Bound as VM properties on purpose: a path through `Client` (`Client.Pub.Prompt`)
     // never re-evaluates once `Client` itself is unchanged — Avalonia re-reads a

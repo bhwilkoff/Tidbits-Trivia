@@ -2391,6 +2391,29 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10x — Live loop tick 24: Windows feeds the portable profile.** The
+audit line was "`NightEnded` has no subscribers"; the code said worse. (1) The
+Windows account was NEVER bootstrapped at launch — nothing called
+`AccountIdentity.Bootstrap()`, so a signed-in player read "Playing on this device
+only." after every relaunch. (2) No Windows game, solo or live, had ever written
+rating/streak/stats — the profile loaded and sat there. (3) The joiner client and
+the night host each minted their OWN anonymous uid on the cleartext
+`FileTokenStore`, so a Windows player's standings and profile lived under two
+uids. Shipped: pure `PlayerIdentity.AfterGame`/`AfterLiveNight` (ports of Swift
+`recordGame`/`recordLiveGame`, 5 xUnit), `AccountIdentity.RecordGame`/
+`RecordLiveGame` (local-first, best-effort put, `ProfileChanged`), the two static
+seams set by `GameData`, bootstrap on `MainWindow.Loaded`, one DPAPI-backed
+`Rtdb` handed to the joiner and to `NightHostFactory.Create(…, db:)`, the Mac's
+rating row in Settings, "Counted toward your streak and Tidbits Rating." on the
+wrap. **Verified on the real box** (`e2e_profile.py`, three runs: the first read
+the wrong uid — which IS finding (3) — the second proved the write via Diag
+lines, the third joined under the profile's uid and `players/{uid}` read
+liveNights/streak 1/freezes; wrap + Settings photographed). Open: Settings
+"Display name" edits the local store, not `players/{id}.name` (3.71). Versions
+1.9.22 / 152 / vc113 / MSIX 1.9.22.0. Next: 3.71, joiners reading the merged
+team name on their standings, round-level points multiplier, re-score after a
+mid-night key fix.
+
 **2026-09-09w — Live loop tick 23: rename a team mid-night + the Windows
 deep link.** The fresh audit's top item: a typo'd name was stuck on the
 projector all night (hide/remove/merge were the only verbs). A3.12 on both

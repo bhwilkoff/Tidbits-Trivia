@@ -660,7 +660,7 @@ public partial class PlayView : UserControl
             title,
             NightSpeedBonusCheck.IsChecked == true,
             NightHostPlaysCheck.IsChecked == true,
-            NightHostNameBox.Text);
+            NightHostNameBox.Text, db: data.Rtdb);
         var vm = new LiveHostViewModel(host);
         Landing.IsVisible = false;
         GameHost.Content = new LiveCockpitView { DataContext = vm };
@@ -686,7 +686,7 @@ public partial class PlayView : UserControl
 
     private void OnJoinNight(object? sender, RoutedEventArgs e)
     {
-        var view = new JoinPlayerView { DataContext = new LivePlayerViewModel() };
+        var view = new JoinPlayerView { DataContext = new LivePlayerViewModel(new LivePlayerClient(GameData.Shared.Value.Rtdb)) };   // ONE identity per device: the joiner, the profile and the standings share the DPAPI-backed uid
         Landing.IsVisible = false;
         GameHost.Content = view;
     }

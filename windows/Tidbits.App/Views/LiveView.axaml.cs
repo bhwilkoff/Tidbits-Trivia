@@ -1679,7 +1679,7 @@ public partial class LiveView : UserControl
             SpeedBonusCheck.IsChecked == true,
             HostPlaysCheck.IsChecked == true,
             HostNameBox.Text,
-            branding);
+            branding, db: data.Rtdb);
         var vm = new LiveHostViewModel(host);
         Setup.IsVisible = false;
         CockpitHost.Content = new LiveCockpitView { DataContext = vm };
@@ -1719,7 +1719,7 @@ public partial class LiveView : UserControl
     private void JoinAsPlayer(string? code, string? name)
     {
         Setup.IsVisible = false;
-        var view = new JoinPlayerView { DataContext = new LivePlayerViewModel() };
+        var view = new JoinPlayerView { DataContext = new LivePlayerViewModel(new LivePlayerClient(GameData.Shared.Value.Rtdb)) };   // ONE identity per device: the joiner, the profile and the standings share the DPAPI-backed uid
         CockpitHost.Content = view;
         if (code is not null) view.AutoJoin(code, name);
     }

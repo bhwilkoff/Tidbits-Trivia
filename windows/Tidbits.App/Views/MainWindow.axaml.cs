@@ -24,6 +24,10 @@ public partial class MainWindow : Window
 
         Loaded += (_, _) =>
         {
+            // The account was never bootstrapped at launch (nothing called it), so a
+            // signed-in player read "Playing on this device only" after every relaunch and
+            // no game could reach the profile. Headless tests never raise Loaded on the shell.
+            _ = Services.GameData.Shared.Value.Account.Bootstrap();
             if (Nav.SelectedItem is null && Nav.MenuItems.Count > 0)
                 Nav.SelectedItem = Nav.MenuItems[0];
             // Render the landing surface DIRECTLY rather than waiting for SelectionChanged.

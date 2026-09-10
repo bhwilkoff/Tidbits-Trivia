@@ -65,6 +65,37 @@ public sealed class AccountIdentity(FirebaseRtdb db, ITokenStore tokens, Windows
             // Local-first: never block the app on a network failure. Stay signed-out.
             AuthError = e.Message;
         }
+        ProfileChanged?.Invoke();   // Settings may already be open: it read the account before this resolved
+    }
+
+    /// Raised on the UI-agnostic side whenever the profile changes (a game recorded, a
+    /// bootstrap that found the account) so Settings and the wrap can re-read it.
+    public event Action? ProfileChanged;
+    /// The last failed profile write, for the launch diagnostics; null after a clean one.
+    public string? LastRecordError { get; private set; }
+
+    /// Record a finished solo game into the portable profile (rating + streak + stats) and
+    /// persist best-effort — the Windows leg of the identity spine, which until 2026-09-10
+    /// loaded the profile and never wrote a game into it.
+    public Task RecordGame(int correct, int total) => Fold(p => PlayerIdentity.AfterGame(p, correct, total, PlayerIdentity.TodayString()));
+
+    /// Record a finished LIVE night (a night keeps the streak + grants a freeze; MCQ
+    /// accuracy nudges the rating when there is any).
+    public Task RecordLiveGame(int correct, int answered) => Fold(p => PlayerIdentity.AfterLiveNight(p, correct, answered, PlayerIdentity.TodayString()));
+
+    private async Task Fold(Func<PlayerIdentity.Profile, PlayerIdentity.Profile> f)
+    {
+        LastRecordError = null;
+        var next = f(Profile ?? PlayerIdentity.Profile.New(SuggestedName()));
+        Profile = next;                                   // local-first: the UI never waits on the network
+        ProfileChanged?.Invoke();
+        try
+        {
+            var key = ProfileId ?? await db.EnsureAuth();
+            ProfileId ??= key;
+            await db.Put(PlayerIdentity.PublicPath(key), next);
+        }
+        catch (Exception e) { LastRecordError = e.Message; }
     }
 
     /// Google sign-in, then re-key the profile onto the verified email and merge whatever

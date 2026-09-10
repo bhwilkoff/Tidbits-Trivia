@@ -32,7 +32,11 @@
             <ui:FASettingsExpander x:Name="AccountSection" Header="Account" IsExpanded="True"
                                  Description="Signing in keeps your records, streak and standings on one profile across every device you play on — phone, computer and the web.">
                 <ui:FASettingsExpander.Footer>
-                    <TextBlock x:Name="AccountStatus" FontSize="13" Opacity="0.8" TextWrapping="Wrap" MaxWidth="260"/>
+                    <StackPanel Spacing="2" MaxWidth="260">
+                        <TextBlock x:Name="AccountStatus" FontSize="13" Opacity="0.8" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="ProfileLine" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
+                                   AutomationProperties.Name="Tidbits Rating and streak"/>
+                    </StackPanel>
                 </ui:FASettingsExpander.Footer>
                 <ui:FASettingsExpanderItem Content="Sign in">
                     <ui:FASettingsExpanderItem.Footer>

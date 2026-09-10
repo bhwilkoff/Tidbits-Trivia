@@ -34,6 +34,13 @@ public sealed class GameData
     /// the VERIFIED email so this machine shares one profile with the player's phone/web.
     /// Also the key an entitlement resolves against (Decision 047).
     public Tidbits.Core.Networking.AccountIdentity Account { get; }
+
+    private async System.Threading.Tasks.Task RecordNight(int correct, int answered)
+    {
+        LaunchHooks.Diag($"night recorded: correct={correct} answered={answered} profileId={Account.ProfileId ?? "(none)"} signedIn={Account.SignedIn}");
+        await Account.RecordLiveGame(correct, answered);
+        LaunchHooks.Diag($"profile write: id={Account.ProfileId ?? "(none)"} error={Account.LastRecordError ?? "none"} liveNights={Account.Profile?.Stats.LiveNights}");
+    }
     /// Tidbits Club gate (Decision 047) — remote-only on Windows until the Microsoft
     /// Store `StoreContext` local check lands (Phase 3). Mirrors web/Kotlin/Swift.
     public Tidbits.Core.Networking.EntitlementStore Entitlement { get; }
@@ -67,6 +74,8 @@ public sealed class GameData
         Duels = new Tidbits.Core.Networking.DuelStore(Path.Combine(appDir, "duels.json"));
         Sfx = new Tidbits.Core.Networking.SfxBoard(Path.Combine(appDir, "sfx-board.json"));
         Account = new Tidbits.Core.Networking.AccountIdentity(Rtdb, new DpapiTokenStore());
+        ViewModels.GameViewModel.GameRecorded = (c, t) => _ = Account.RecordGame(c, t);
+        ViewModels.LivePlayerViewModel.NightRecorded = (c, a) => _ = RecordNight(c, a);
         // ONE instance shared by the entitlement gate and the paywall UI.
         // WindowsStoreGateway only when this process actually has a Store licence context —
         // i.e. the packaged MSIX. The direct-download .exe and the Mac head have none, and

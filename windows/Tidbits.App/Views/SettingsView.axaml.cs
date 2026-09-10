@@ -17,6 +17,7 @@ public partial class SettingsView : UserControl
         VersionText.Text = $"Tidbits Trivia for Windows — version {v?.ToString(3) ?? "1.0.0"}";
         RefreshProfile();
         RefreshAccount();
+        GameData.Shared.Value.Account.ProfileChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(RefreshAccount);
         RefreshClub();
         _ = RefreshEntitlementThenClub();
     }
@@ -86,6 +87,8 @@ public partial class SettingsView : UserControl
             SignOutButton.IsVisible = false;
         }
 
+        ProfileLine.Text = a.Profile is { } p ? Tidbits.Core.Networking.PlayerIdentity.SummaryLine(p) : "";
+        ProfileLine.IsVisible = ProfileLine.Text.Length > 0;
         AccountErrorRow.IsVisible = a.AuthError is { Length: > 0 };
         AccountError.Message = a.AuthError ?? "";
     }

@@ -22,9 +22,12 @@ public static class NightHostFactory
         bool speedBonus,
         bool hostPlays,
         string? hostName,
-        LiveEvent? branding = null)
+        LiveEvent? branding = null,
+        FirebaseRtdb? db = null)
     {
-        var host = new LiveNightHost(plan, category, provider, title)
+        // ONE identity per device: a bare LiveHostNet would mint its own anonymous uid on a
+        // cleartext FileTokenStore; the app hands in its DPAPI-backed client instead.
+        var host = new LiveNightHost(plan, category, provider, title, db is null ? null : new LiveHostNet(db))
         {
             SpeedBonus = speedBonus,
             Played = Store.PlayedLog.Shared.Value,

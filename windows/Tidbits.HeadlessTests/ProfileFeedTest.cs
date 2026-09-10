@@ -65,4 +65,28 @@ public class ProfileFeedTest
         Assert.Contains("1-day streak", line);
         Assert.Contains("1 live night", line);
     }
+
+    [Fact]
+    public void Rename_trims_caps_at_24_and_ignores_an_empty_name()
+    {
+        var p = Fresh();
+        Assert.Equal("Quiz Khalifa", PlayerIdentity.Renamed(p, "  Quiz Khalifa  ").Name);
+        Assert.Equal(24, PlayerIdentity.Renamed(p, new string('x', 40)).Name.Length);
+        Assert.Equal(p.Name, PlayerIdentity.Renamed(p, "   ").Name);
+        Assert.NotEqual(p.AvatarSeed, PlayerIdentity.Reseeded(p).AvatarSeed);
+        Assert.Equal(p.Rating, PlayerIdentity.Reseeded(p).Rating);
+    }
+
+    [Fact]
+    public void The_local_store_mirrors_the_portable_profile()
+    {
+        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tidbits-mirror-" + System.Guid.NewGuid().ToString("N") + ".json");
+        var local = new PlayerIdentityStore(path);
+        local.Adopt("Quiz Khalifa", "abcdef123456");
+        Assert.Equal("Quiz Khalifa", new PlayerIdentityStore(path).Current.Name);
+        Assert.Equal("abcdef123456", new PlayerIdentityStore(path).Current.AvatarSeed);
+        local.Adopt("   ", "");   // an empty name never clobbers the cache
+        Assert.Equal("Quiz Khalifa", local.Current.Name);
+        System.IO.File.Delete(path);
+    }
 }

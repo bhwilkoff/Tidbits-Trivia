@@ -59,6 +59,7 @@ public sealed class AccountIdentity(FirebaseRtdb db, ITokenStore tokens, Windows
                 Profile = await db.Get<PlayerIdentity.Profile>(PlayerIdentity.PublicPath(uid))
                           ?? PlayerIdentity.Profile.New(SuggestedName());
             }
+            await AdoptLocalName();
         }
         catch (Exception e)
         {
@@ -73,6 +74,24 @@ public sealed class AccountIdentity(FirebaseRtdb db, ITokenStore tokens, Windows
     public event Action? ProfileChanged;
     /// The last failed profile write, for the launch diagnostics; null after a clean one.
     public string? LastRecordError { get; private set; }
+
+    /// The name the LOCAL store carried before the portable profile became the truth
+    /// (3.71): a player who named themselves on this machine keeps that name when the
+    /// portable profile still has its "Player NNNN" default.
+    public string? LocalNameHint { get; set; }
+
+    /// Rename the portable profile — the leaderboard, the join screen and every device
+    /// read this one; the local store mirrors it.
+    public Task Rename(string name) => Fold(p => PlayerIdentity.Renamed(p, name));
+    public Task RerollAvatar() => Fold(PlayerIdentity.Reseeded);
+
+    private async Task AdoptLocalName()
+    {
+        if (Profile is not { } p || !PlayerIdentity.IsDefaultName(p.Name)) return;
+        if (LocalNameHint is not { Length: > 0 } hint || PlayerIdentity.IsDefaultName(hint) || hint == "Player") return;
+        Profile = PlayerIdentity.Renamed(p, hint);
+        if (ProfileId is { } id) { try { await db.Put(PlayerIdentity.PublicPath(id), Profile); } catch { } }
+    }
 
     /// Record a finished solo game into the portable profile (rating + streak + stats) and
     /// persist best-effort — the Windows leg of the identity spine, which until 2026-09-10

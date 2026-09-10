@@ -387,6 +387,9 @@ there is no regression baseline at all.
   relaunches the box with `TIDBITS_SETTINGS=1` for the rating line. The Diag lines `night
   ended` / `night recorded` / `profile write` in launch-hooks.log are the layer-by-layer
   trace; the first run failed because the joiner's uid was not the profile's.
+- Windows box: `TIDBITS_PROFILE_NAME=<name>` renames the portable profile through the Settings
+  path at launch; `scratchpad/e2e_name.py` photographs Settings, parses the `profile rename`
+  Diag line for the profile id and reads `players/{id}.name` back from the wire.
 - Both hosts: `TIDBITS_LIVE_RENAME=<name>` + `TIDBITS_LIVE_RENAME_AT=<secs>` rename the
   alphabetically first joined team (A3.12); `scratchpad/e2e_rename.py <mac|windows>`
   joins two wire tables and asserts `meta/names/{uid}` names ONLY the first, then

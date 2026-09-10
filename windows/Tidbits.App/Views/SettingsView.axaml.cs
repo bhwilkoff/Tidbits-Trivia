@@ -17,7 +17,7 @@ public partial class SettingsView : UserControl
         VersionText.Text = $"Tidbits Trivia for Windows — version {v?.ToString(3) ?? "1.0.0"}";
         RefreshProfile();
         RefreshAccount();
-        GameData.Shared.Value.Account.ProfileChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(RefreshAccount);
+        GameData.Shared.Value.Account.ProfileChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => { RefreshAccount(); RefreshProfile(); });
         RefreshClub();
         _ = RefreshEntitlementThenClub();
     }
@@ -152,13 +152,13 @@ public partial class SettingsView : UserControl
 
     private void OnNameCommitted(object? sender, RoutedEventArgs e)
     {
-        GameData.Shared.Value.Identity.Rename(NameBox.Text ?? "");
+        _ = GameData.Shared.Value.Account.Rename(NameBox.Text ?? "");   // the portable profile; the local store mirrors it
         RefreshProfile();
     }
 
     private void OnShuffleAvatar(object? sender, RoutedEventArgs e)
     {
-        GameData.Shared.Value.Identity.RerollAvatar();
+        _ = GameData.Shared.Value.Account.RerollAvatar();
         RefreshProfile();
     }
 

@@ -144,6 +144,18 @@ public static class PlayerIdentity
         return p with { Rating = rating, Streak = p.Streak.Played(today, liveNight: true), Stats = stats };
     }
 
+    /// The Settings rename, the way Swift `rename` does it: trimmed, capped at 24, an empty
+    /// name leaves the profile alone.
+    public static Profile Renamed(Profile p, string name)
+    {
+        var t = (name ?? "").Trim();
+        if (t.Length == 0) return p;
+        return p with { Name = t.Length > 24 ? t[..24] : t };
+    }
+
+    /// A fresh avatar seed — a new deterministic hue (self-expression, not pay-to-win).
+    public static Profile Reseeded(Profile p) => p with { AvatarSeed = Guid.NewGuid().ToString("N")[..12] };
+
     /// "1012 · provisional · 3-day streak · 2 live nights" — the one-line profile summary
     /// Settings shows on every platform.
     public static string SummaryLine(Profile p)

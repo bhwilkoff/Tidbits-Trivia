@@ -74,6 +74,10 @@ public sealed class GameData
         Duels = new Tidbits.Core.Networking.DuelStore(Path.Combine(appDir, "duels.json"));
         Sfx = new Tidbits.Core.Networking.SfxBoard(Path.Combine(appDir, "sfx-board.json"));
         Account = new Tidbits.Core.Networking.AccountIdentity(Rtdb, new DpapiTokenStore());
+        // 3.71: the portable profile is the truth; the local store is its cache. A name typed
+        // on this machine before that rule existed is carried up once (LocalNameHint).
+        Account.LocalNameHint = Identity.Current.Name == "Player" ? null : Identity.Current.Name;
+        Account.ProfileChanged += () => { if (Account.Profile is { } p) Identity.Adopt(p.Name, p.AvatarSeed); };
         ViewModels.GameViewModel.GameRecorded = (c, t) => _ = Account.RecordGame(c, t);
         ViewModels.LivePlayerViewModel.NightRecorded = (c, a) => _ = RecordNight(c, a);
         // ONE instance shared by the entitlement gate and the paywall UI.

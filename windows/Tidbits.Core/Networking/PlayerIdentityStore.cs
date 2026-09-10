@@ -53,6 +53,19 @@ public sealed class PlayerIdentityStore
         Persist();
     }
 
+    /// Mirror the portable profile (3.71): the local file is a cache of `players/{id}`'s
+    /// name + avatar, so every offline reader (`GameData.PlayerName`, the Records banner)
+    /// shows the same identity as the leaderboard.
+    public void Adopt(string name, string avatarSeed)
+    {
+        var t = (name ?? "").Trim();
+        if (t.Length == 0) return;
+        var next = _profile with { Name = t.Length > 24 ? t[..24] : t, AvatarSeed = string.IsNullOrEmpty(avatarSeed) ? _profile.AvatarSeed : avatarSeed };
+        if (next == _profile) return;
+        _profile = next;
+        Persist();
+    }
+
     private static string NewSeed() => Guid.NewGuid().ToString("N")[..12];
 
     private void Persist()

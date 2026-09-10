@@ -27,7 +27,7 @@ public partial class MainWindow : Window
             // The account was never bootstrapped at launch (nothing called it), so a
             // signed-in player read "Playing on this device only" after every relaunch and
             // no game could reach the profile. Headless tests never raise Loaded on the shell.
-            _ = Services.GameData.Shared.Value.Account.Bootstrap();
+            _ = BootstrapAccount();
             if (Nav.SelectedItem is null && Nav.MenuItems.Count > 0)
                 Nav.SelectedItem = Nav.MenuItems[0];
             // Render the landing surface DIRECTLY rather than waiting for SelectionChanged.
@@ -187,6 +187,17 @@ public partial class MainWindow : Window
     }
 
     /// Select the nav tab a deep link routes to (no-op for None).
+    private static async System.Threading.Tasks.Task BootstrapAccount()
+    {
+        var a = Services.GameData.Shared.Value.Account;
+        await a.Bootstrap();
+        if (Services.LaunchHooks.ProfileName is { Length: > 0 } name)
+        {
+            await a.Rename(name);
+            Services.LaunchHooks.Diag($"profile rename: id={a.ProfileId ?? "(none)"} name={a.Profile?.Name} error={a.LastRecordError ?? "none"}");
+        }
+    }
+
     public void Route(Tidbits.Core.Networking.DeepLinkTarget target)
     {
         if (target.Kind == Tidbits.Core.Networking.DeepLinkKind.None) return;

@@ -2391,6 +2391,20 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10y — Live loop tick 25: the Windows display name is the portable
+profile's.** 3.71 from tick 24: Settings "Display name" and "Shuffle" now write
+`players/{id}` (`AccountIdentity.Rename`/`RerollAvatar` over pure
+`PlayerIdentity.Renamed`/`Reseeded`), and the local `PlayerIdentityStore` became
+a cache that mirrors every `ProfileChanged` — so the Records banner, quick
+match, duels, the Daily board and the join screen all read the same name the
+leaderboard shows. A name typed locally before the rule existed is carried up
+once (`LocalNameHint`) while the portable profile is still "Player NNNN". Hook
+`TIDBITS_PROFILE_NAME`. **Verified on the real box** (`e2e_name.py`): the
+Settings box read "QA Named Player" and `players/{id}.name` on the wire carried
+it. Versions 1.9.23 / 153 / vc114 / MSIX 1.9.23.0. Next: joiners reading the
+merged team name on their standings (all five joiners), round-level points
+multiplier, re-score after a mid-night key fix, host toasts on Windows.
+
 **2026-09-10x — Live loop tick 24: Windows feeds the portable profile.** The
 audit line was "`NightEnded` has no subscribers"; the code said worse. (1) The
 Windows account was NEVER bootstrapped at launch — nothing called

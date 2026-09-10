@@ -145,6 +145,16 @@ Nearest-Wins (numeric — also the tie-break unit), Ordering, Wager (Stake),
 Poll/Majority. Audio round and Fastest-Finger (speed scoring) are Phase B.
 Each format reuses the existing `GameMode`/question shapes where one maps.
 
+A8.11 **The big screen says how far the room has got** (2026-09-10). "3 of 8
+answered", on the slide, while a question is live. The cockpit has always known
+this; the ROOM did not, so only the host could tell whether the stragglers were
+still typing — and a room that cannot see the count cannot chivvy its own
+slowest table. It counts TEAMS, not devices (G7), it is hidden before anyone has
+joined ("0 of 0 answered" on a projector is noise) and it disappears on the
+reveal, when it stops being news. Like every big-screen element it is a switch
+(A8.7); the text is one pure function shared with Windows, so the two projectors
+cannot word it differently.
+
 A2.12 **The night is kept** (2026-09-10). A night used to exist only while it
 was happening: close the wrap and the final standings, the answer sheet and the
 A3.11 report were gone. A pub host runs the same room every week and is asked

@@ -82,6 +82,7 @@ final class LiveProjectorElements {
         Element(id: "picture", title: "Question picture"),
         Element(id: "tally", title: "Live vote bars"),
         Element(id: "status", title: "\"Answer on your phones\""),
+        Element(id: "answersIn", title: "Answers in (12 of 18)"),
         Element(id: "story", title: "Story on reveal"),
         Element(id: "teams", title: "Team standings strip"),
         Element(id: "joinPanel", title: "Scan-to-join panel"),
@@ -299,6 +300,13 @@ struct LiveBigScreen_macOS: View {
         .padding(.horizontal, 36).padding(.top, 24).padding(.bottom, 20)
     }
 
+    /// A8.11: "12 of 18 answered" while a question is live. Teams, not devices (G7),
+    /// and nil before anyone has joined — "0 of 0 answered" on a projector is noise.
+    private func answersInLine(_ s: LiveHostSession) -> String? {
+        guard let net = coordinator.net, net.isOpen else { return nil }
+        return LiveProgress.answersIn(answered: net.answeredTeamCount, joined: net.joinedTeams.count)
+    }
+
     /// Event name & venue on the left, round line on the right. Hidden elements
     /// contribute nothing: with both off there is no header band at all.
     @ViewBuilder private func header(_ s: LiveHostSession) -> some View {
@@ -404,6 +412,15 @@ struct LiveBigScreen_macOS: View {
                                 .foregroundStyle(Tidbits.Palette.inkSoft)
                         } else if el.shows("status") {
                             Text("Answer on your phones").font(.system(size: 24, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                        }
+                        // A8.11: how many tables are in. The cockpit has always known; the ROOM
+                        // did not, so the host was the only one who could tell whether the
+                        // stragglers were still typing — and the room could not chivvy them.
+                        if el.shows("answersIn"), !s.revealed, let line = answersInLine(s) {
+                            Text(line)
+                                .font(.system(size: 26, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.blue)
+                                .accessibilityIdentifier("big.answersIn")
                         }
                     }
                     if storyShown {   // Wave A: the story behind the answer — the learning payoff on the big screen

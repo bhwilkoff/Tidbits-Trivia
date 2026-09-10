@@ -1,5 +1,11 @@
 # Tidbits Live — Premium Feature Backlog
 
+> **Audited 2026-09-10.** This file had drifted since 2026-07-04: nineteen ⬜ rows
+> were shipped long ago, and an audit that trusts them proposes work that already
+> exists. Each was corrected only after grepping the source for it — a doc row is
+> never evidence on its own (`documented-backlog-sweep-2026-08`). Re-audit against
+> the CODE, not this table.
+
 **Purpose.** A researched, prioritized backlog of the features pub-trivia **hosts and
 venues pay for**, so we can point `/loop` at it and make v1 of the macOS Tidbits Live
 app as fully featured as possible. Compiled 2026-07-04 from a five-stream market survey
@@ -107,15 +113,15 @@ is a first-class format to design *for*, not a legacy fallback.
 |---|---|---|---|
 | Offline pre-game question builder | Build the whole night ahead, saved to account, re-openable/editable | TS | ✅ (event builder) |
 | Manual entry + AI + corpus mix | Author by hand, from the 20k corpus, or AI-generate a themed round | D→TS | ✅ |
-| **Personal question library + reuse** | Every question stored, reusable/editable across future nights; "mine vs. provided" | P | ⬜ |
+| **Personal question library + reuse** | Every question stored, reusable/editable across future nights; "mine vs. provided" | P | ✅ |
 | **Avoid-repeats intelligence** | "Last used" date + used-in-event history + dedupe warning when a Q re-enters a set | D (unmet gap) | ⬜ |
 | **Drag-to-reorder** questions & rounds | Reorder within/between rounds by drag | TS | 🔨 |
 | Topic/category per round; themed rounds | Assign a theme to each round; mix formats in one night | TS | ✅ |
 | Save / duplicate / **clone last week** | One-click duplicate a whole event to spin a variation | D | 🔨 |
 | Reusable templates | Publish/save a game shape as a template | D | 🔨 |
-| **Difficulty & category balance meter** | Visual 30/50/20 curve + category spread while authoring | D (unmet gap) | ⬜ |
+| **Difficulty & category balance meter** | Visual 30/50/20 curve + category spread while authoring | D (unmet gap) | ✅ |
 | Per-question metadata | Points (fixed or decaying), penalty, answer key, host notes set at authoring | P | 🔨 |
-| **CSV / spreadsheet import** | Bulk-load questions from Sheets/Excel (hosts already write there) | D | ⬜ |
+| **CSV / spreadsheet import** | Bulk-load questions from Sheets/Excel (hosts already write there) | D | ✅ |
 | PDF/doc → questions (AI-assisted) | Extract a round from an uploaded document | P | ⬜ |
 | Export quiz pack | Portable game file incl. picture questions | P | 🔨 (PDF export exists) |
 
@@ -130,8 +136,8 @@ is a first-class format to design *for*, not a legacy fallback.
 | Matching | Pair keys to values (partial credit) | D | ✅ |
 | Nearest-wins / closest number | Numeric estimate; also the tiebreaker unit | D | ✅ |
 | List / enumerate (name-many) | Name as many as you can | D | ✅ |
-| **Audio round (name-that-tune)** | Host plays a clip; teams ID it; speed-tiered scoring | P (market-beloved; SpeedQuizzing *can't even author* audio) | ⬜ |
-| **Video question** | Video clip as prompt | P | ⬜ |
+| **Audio round (name-that-tune)** | Host plays a clip; teams ID it; speed-tiered scoring | P (market-beloved; SpeedQuizzing *can't even author* audio) | ✅ |
+| **Video question** | Video clip as prompt | P | ✅ |
 | **Wager round** | Teams bet points before answering | P | 🔨 (Stake mode exists) |
 | **First-letter / wordplay** | Answers share a first letter; word-chain, etc. | D | ⬜ |
 | Fastest-finger / buzzer race | Only fastest correct scores; speed bonus | P | ✅ (speed-bonus) |
@@ -145,11 +151,11 @@ is a first-class format to design *for*, not a legacy fallback.
 |---|---|---|---|
 | Manual-advance, host-paced | Host controls the beat, not an auto-timer | TS | ✅ |
 | Reveal-on-command | Hold the answer; dramatic pause; reveal on the host's beat | D | ✅ |
-| **Per-question / per-round timers** | Adjustable countdown per question; on-screen | TS | ⬜ |
+| **Per-question / per-round timers** | Adjustable countdown per question; on-screen | TS | ✅ |
 | **Diminishing / speed-weighted points** | Points decay over the timer (faster = more) | P | 🔨 (rank speed-bonus only) |
 | Manual score override (referee) | Host adjusts any team's score; final say | **P (headline differentiator)** | ✅ |
 | Free-text review + spelling leniency | Review typed answers; mark-correct; alias/fuzzy match | **P (rare)** | ✅ |
-| **Mid-game editing** | Fix a typo/wrong answer key while live | D (unmet gap; hosts fear crashes) | ⬜ |
+| **Mid-game editing** | Fix a typo/wrong answer key while live | D (unmet gap; hosts fear crashes) | ✅ |
 | Pause / skip / re-open a question | Full flow control | D | 🔨 |
 | Live answer tally | See submissions land in real time | D | ✅ |
 | **Host notes / "read this aloud"** | Presenter-only note per question | P | ⬜ |
@@ -164,14 +170,14 @@ is a first-class format to design *for*, not a legacy fallback.
 | Reveal choreography | Scale-in + glow reveal, "beat of silence," score reveal | P | ✅ (§A8) |
 | Round-intro cards | Full-screen "ROUND 2 · HISTORY" announcement | D | ✅ (§A8) |
 | Winner celebration | Confetti/crown finale | D | ✅ (§A8) |
-| **Built-in SFX / stinger board** | Correct/wrong/drumroll/countdown/round-transition sounds | P (safe to **bundle** royalty-free; closes the "run a separate soundboard" gap) | ⬜ |
+| **Built-in SFX / stinger board** | Correct/wrong/drumroll/countdown/round-transition sounds | P (safe to **bundle** royalty-free; closes the "run a separate soundboard" gap) | ✅ |
 | **Audio playback to venue PA** | Clean, full-level clip playback on a **selectable output device**; host points at their own MP3 folder | P (structural for audio rounds) | ⬜ |
-| Looping music beds w/ auto-duck | Atmosphere loop that ducks under clip audio, then resumes | D | ⬜ |
-| On-screen countdown timer | Live timer builds pressure; music-synced | TS | ⬜ |
+| Looping music beds w/ auto-duck | Atmosphere loop that ducks under clip audio, then resumes | D | ✅ |
+| On-screen countdown timer | Live timer builds pressure; music-synced | TS | ✅ |
 | Big-screen chrome | Round title, question number, difficulty label, join QR | TS | 🔨 |
 | **Venue branding on screens** | Logo + colors on big screen (and print) | P | 🔨 (basic) |
 | **White-label depth** | Custom fonts/backgrounds/colors + custom join URL | P (clean paywall precedent) | ⬜ 🔒 |
-| **Sponsor slides between rounds** | Branded interstitial / lobby logo / sponsored-question tag | P (monetization) | ⬜ 🔒 |
+| **Sponsor slides between rounds** | Branded interstitial / lobby logo / sponsored-question tag | P (monetization) | ✅ 🔒 |
 | Streaming out (OBS / screen-share) | Capturable presentation window for hybrid/remote | D | 🔨 (window is capturable) |
 | Native low-latency streaming | In-app stream to remote players | P (metered) | ⬜ 🔒 |
 
@@ -208,8 +214,8 @@ is a first-class format to design *for*, not a legacy fallback.
 | Retroactive "mark correct" for all | Accept a new variant → award everyone who gave it | D | 🔨 |
 | Undo last question / live point edit | Resolve a dispute on the spot | D | 🔨 |
 | Built-in tie-break engine | Numeric closest-wins / sudden-death | **P** | ✅ |
-| Final wager tie-break | Standings shown, teams wager on a last Q | D | ⬜ |
-| **Brains-only tie-break** | Nominated-player buzz-off, phones down | D | ⬜ |
+| Final wager tie-break | Standings shown, teams wager on a last Q | D | ✅ |
+| **Brains-only tie-break** | Nominated-player buzz-off, phones down | D | ✅ |
 
 ## G. Team management & moderation
 
@@ -218,8 +224,8 @@ is a first-class format to design *for*, not a legacy fallback.
 | Team names on the big screen | On-screen name is the team identity | TS | ✅ |
 | Edit team name/details mid-game | Rename, fix, save | TS | 🔨 |
 | **Kick / remove a team** | Strip an offensive/duplicate team from standings | D | ⬜ 🔒 (needs a `meta/kicked` rules change) |
-| **Answer/name moderation gate** | Approve typed answers/team names before projecting (avoid a slur on the venue screen) | P | ⬜ |
-| **Team merge** | Combine two teams into one row | D (unmet gap) | ⬜ |
+| **Answer/name moderation gate** | Approve typed answers/team names before projecting (avoid a slur on the venue screen) | P | ✅ |
+| **Team merge** | Combine two teams into one row | D (unmet gap) | ✅ |
 | Carry teams across rounds/nights | Don't rebuild the roster each game | D | 🔨 |
 
 ## H. Reliability & integrity (cheating deterrence)
@@ -229,16 +235,16 @@ is a first-class format to design *for*, not a legacy fallback.
 | Offline / weak-wifi resilience | Websocket transport tolerates bad venue wifi; local host | P (Mac-native strength) | ✅ |
 | Graceful reconnect | Dropped phone rejoins cleanly | D | ✅ |
 | **Answer-lock ("pencils down")** | Host freezes answers before reveal; a late Googler is locked out | P (the #1 host complaint) | ✅ |
-| **Answer-lock *timer*** | Countdown auto-locks submission (shorter = less lookup time) | D | ⬜ |
-| **Tab-switch / focus signal** | Flag a player who backgrounds the join page mid-question | D (nobody in trivia ships this) | ⬜ |
-| Brains-only tie-break | Phones-down deciding moment | D | ⬜ |
+| **Answer-lock *timer*** | Countdown auto-locks submission (shorter = less lookup time) | D | ✅ |
+| **Tab-switch / focus signal** | Flag a player who backgrounds the join page mid-question | D (nobody in trivia ships this) | ✅ |
+| Brains-only tie-break | Phones-down deciding moment | D | ✅ |
 | Lookup-resistant question design | Connect-the-clues / "what do these share" beats single facts | D (content, not code) | 🔨 (corpus quality) |
 
 ## I. Venue business (the "run trivia as a business" layer)
 
 | Feature | What it does | Signal | Status |
 |---|---|---|---|
-| **Recurring-series scheduling** | Define venue + weekday + time once; auto-spawn each week's event pre-loaded | P (removes weekly prep) | ⬜ |
+| **Recurring-series scheduling** | Define venue + weekday + time once; auto-spawn each week's event pre-loaded | P (removes weekly prep) | ✅ |
 | **Multi-venue management** | Org → venues → hosts hierarchy; manager dashboard | P | ⬜ 🔒 |
 | Host assignment / cohosts | Assign a host (or cohost) to each venue/night | P | ⬜ 🔒 |
 | Content distribution to hosts | Push central question packs org-wide | P | ⬜ 🔒 |

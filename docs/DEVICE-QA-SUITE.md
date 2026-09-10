@@ -398,6 +398,15 @@ there is no regression baseline at all.
   hosts hold the show with a promised return. `scratchpad/e2e_break.py web,atv,dongle,windows`
   asserts `pub.onBreak` + `breakUntil` on the wire, reads the web's `.live-breakhead`, and
   photographs every joiner — the question must be GONE on each, not merely covered.
+- The big screen with a LIVE room: `TIDBITS_LIVE_PROJECTOR=1` opens the projector on
+  launch (Windows had this since 3.36; the Mac gained it 2026-09-10, so its projector
+  could only ever be photographed OFFLINE by the snapshot renderer, which has no room and
+  therefore no joined tables). `scratchpad/e2e_answersin.py <mac|windows>` joins two wire
+  tables, has ONE answer, and photographs "1 of 2 answered" (A8.11).
+  **Photograph the box, not the Mac:** a Mac screen-region grab photographs whatever is
+  frontmost — twice on 2026-09-10 it captured the owner's own Safari window instead of the
+  projector, and both files were deleted. Prove Mac-side text with a pure unit test
+  (`LiveProgressTests`) and take the glass evidence on the dedicated Windows box.
 - Duels: `TIDBITS_DUEL_CHALLENGE=<uid>` challenges that uid on launch and writes the new
   duel id to the Diag log; `TIDBITS_DUELS=1` opens the Duels dialog. `scratchpad/e2e_duel.py`
   runs the whole loop on the box — challenge, the friend reads with its own token and plays,

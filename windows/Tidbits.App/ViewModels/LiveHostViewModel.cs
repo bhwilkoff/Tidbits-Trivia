@@ -62,6 +62,13 @@ public sealed class LiveHostViewModel : ObservableObject
     /// round (always), otherwise "Answer on your phones" (a switch).
     public bool ShowStatusLine => !Host.Revealed && !HasBuzz && (Host.IsBuzzRound || Elements.Shows("status"));
     public string StatusLine => Host.IsBuzzRound ? "BUZZ IN" : "Answer on your phones";
+
+    /// A8.11: how many tables are in, on the BIG SCREEN. The cockpit has always known;
+    /// the room did not, so only the host could tell whether the stragglers were still
+    /// typing. Teams, not devices (G7), and hidden before anyone joins — "0 of 0
+    /// answered" on a projector is noise.
+    public bool ShowAnswersIn => !Host.Revealed && Elements.Shows("answersIn") && AnswersInLine.Length > 0;
+    public string AnswersInLine => LiveProgress.AnswersIn(Host.AnsweredCount, Host.Net.JoinedTeams().Count) ?? "";
     public bool ShowStory => Elements.Shows("story") && HasRevealStory;
     public bool ShowSource => Elements.Shows("story") && HasRevealSource;
     /// The answer capsule is for a NON-MCQ reveal; an MCQ's tally already lights the

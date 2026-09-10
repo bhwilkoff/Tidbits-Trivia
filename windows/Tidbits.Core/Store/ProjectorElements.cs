@@ -31,6 +31,7 @@ public sealed class ProjectorElements
         new Element("picture", "Question picture"),
         new Element("tally", "Live vote bars"),
         new Element("status", "\"Answer on your phones\""),
+        new Element("answersIn", "Answers in (12 of 18)"),
         new Element("story", "Story on reveal"),
         new Element("teams", "Team standings strip"),
         new Element("joinPanel", "Scan-to-join card"),

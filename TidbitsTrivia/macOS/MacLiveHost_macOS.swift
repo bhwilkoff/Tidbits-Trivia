@@ -875,6 +875,9 @@ struct LiveHostView_macOS: View {
         // enough to show every control without a risky ScrollView restructure of the tuned layout.
         .frame(minWidth: 900, maxWidth: .infinity, minHeight: 680, maxHeight: .infinity)
         .background(Tidbits.Palette.bg)
+        // TIDBITS_LIVE_PROJECTOR=1 — open the big screen on launch (A8.11 coverage). The
+        // Mac projector could only be photographed OFFLINE before this, with no live room.
+        .task { try? await Task.sleep(for: .seconds(3)); openProjectorIfHooked() }
         // §B2.1 — the Show menu. Published only while a night is on, so the whole
         // menu greys out when there is no show (§B2.3).
         .focusedSceneValue(\.liveShow, LiveShowCommands(
@@ -912,6 +915,15 @@ struct LiveHostView_macOS: View {
         }
     }
     private func openProjector() { openProjectorWindow(id: "tidbits-bigscreen") }
+
+    /// TIDBITS_LIVE_PROJECTOR=1 — open the big screen on launch (the Windows box has had
+    /// this since 3.36). Without it the Mac projector could only be photographed OFFLINE
+    /// by the snapshot renderer, which has no room and therefore no joined tables — so
+    /// anything that depends on a live room could not be seen at all.
+    private func openProjectorIfHooked() {
+        guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_PROJECTOR"] == "1" else { return }
+        if LiveProjectorWindow.window == nil { openProjector() }
+    }
 
     // MARK: Cockpit
 

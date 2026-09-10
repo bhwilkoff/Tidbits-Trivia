@@ -2392,6 +2392,32 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10ak — Live loop tick 37: the big screen says how far the room has
+got.** Ran a fresh audit agent (rather than inventing) against the docs AND the
+source. Its top find was real and I verified it myself: the projector had ELEVEN
+switchable elements and none told the room how many tables were in — the cockpit
+knew, the room did not, so only the host could tell whether the stragglers were
+still typing. A8.11 / 3.79: a twelfth element `answersIn`, shown while a question
+is live, hidden before anyone joins, gone on the reveal, counting TEAMS not
+devices (G7); the text is the shared pure `LiveProgress` (3 tests per stack).
+**The audit was WRONG on its #2** ("the Windows joiner is silent on an audio
+question") — it grepped for the literal word "audio" in one file and missed that
+`PlayClip` runs for both kinds and `MediaTitle` already says "Listen to the clip".
+Verified before building; nothing to fix. It also proved 19 rows of
+TIDBITS-LIVE-PREMIUM-BACKLOG stale (shipped but still ⬜) — corrected, with a
+header telling the next audit to trust the code, not the table.
+
+**A real process failure, recorded:** photographing the Mac projector twice
+captured the OWNER'S OWN Safari window (a personal cover letter) instead of the
+app — `screen-region-grades-the-screen`, exactly the memory that already exists.
+Both files were deleted immediately. The rule now written into DEVICE-QA-SUITE:
+take big-screen glass evidence on the dedicated Windows box, and prove Mac-side
+text with a pure unit test. The Mac also gained `TIDBITS_LIVE_PROJECTOR=1`
+(Windows has had it since 3.36) so a live projector is at least reachable there.
+Full Windows suite green: 809 tests. Versions 1.9.34 / 164 / vc125 / MSIX
+1.9.34.0. Next from the audit: resume an interrupted night (M), remove a joined
+phone team (M), the library remembering what you already asked (M).
+
 **2026-09-10aj — Live loop tick 36: the duel coverage gap, closed the same day
 it was named.** Tick 35 narrowed `duels/$id` to its two players and recorded an
 honest gap: the rule was proven with raw tokens, but the IN-APP flow had never

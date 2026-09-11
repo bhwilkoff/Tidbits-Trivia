@@ -70,6 +70,13 @@ enum LiveProjectorSnapshot {
             Shot(name: "picture") { s in s.next(); s.deadlineMs = LiveHostNet.nowMS() + 32_000 },
             Shot(name: "picture-reveal") { s in s.next(); s.reveal() },
             Shot(name: "scores") { s in s.showScores = true },
+            // A2.15: the between-rounds scoreboard WITH movement — the ritual slide.
+            Shot(name: "round-scores") { s in
+                s.lastScoreboardRanks = ["Les Quizerables", "The Quizzards of Oz", "Norfolk Enchants",
+                                         "Trivia Newton John", "Beer Pressure", "Smarty Pints"]
+                s.openRoundScoreboard(currentRanks: ["The Quizzards of Oz", "Trivia Newton John", "Les Quizerables",
+                                                     "Norfolk Enchants", "Smarty Pints", "Beer Pressure"], round: 1)
+            },
             Shot(name: "break") { s in s.onBreak = true },
             Shot(name: "standings") { s in s.finished = true },
             // The board: jump into round 2 and hold the grid.

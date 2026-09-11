@@ -9,7 +9,11 @@ using Tidbits.Core.Networking;
 namespace Tidbits.App.ViewModels;
 
 /// One climbing-leaderboard row for the big screen (rank + gold-leader accent).
-public sealed record LiveStandingRow(int Rank, string Name, int Score, Avalonia.Media.IBrush RankColor);
+public sealed record LiveStandingRow(int Rank, string Name, int Score, Avalonia.Media.IBrush RankColor,
+                                     string Move = "", Avalonia.Media.IBrush? MoveColor = null)
+{
+    public bool HasMove => Move.Length > 0;
+}
 
 /// Wraps a LiveNightHost for the cockpit UI. LiveNightHost relays its LiveHostNet
 /// changes (which fire on background SSE threads); this marshals them to the UI
@@ -24,6 +28,7 @@ public sealed class LiveHostViewModel : ObservableObject
         Host.PropertyChanged += (_, _) => Dispatcher.UIThread.Post(() => OnPropertyChanged(string.Empty));
         // G6: a remote command arrives off the network thread; marshal it before
         // it touches the show.
+        Host.PropertyChanged += (_, _) => Dispatcher.UIThread.Post(SyncScoreboardHold);
         Host.Net.RemoteCommandReceived += verb =>
             Dispatcher.UIThread.Post(async () => await RunRemoteVerb(verb));
         // A8.7: an element switched in the cockpit re-lays the projector.
@@ -111,6 +116,16 @@ public sealed class LiveHostViewModel : ObservableObject
 
     // Big-screen standings hold (3.39) — the host parks the current climbing
     // leaderboard on the projector between rounds; the question view yields to it.
+    /// A2.15: Core opens the between-rounds scoreboard (from ANY path — the cockpit
+    /// button, the keyboard, or the phone remote); the view only has to hold it up.
+    private int _shownScoreboardEpoch;
+    private void SyncScoreboardHold()
+    {
+        if (Host.ScoreboardEpoch == _shownScoreboardEpoch) return;
+        _shownScoreboardEpoch = Host.ScoreboardEpoch;
+        if (Host.CurrentStage == LiveNightHost.Stage.Playing) HoldStandings = true;
+    }
+
     private bool _holdStandings;
     public bool HoldStandings
     {
@@ -280,9 +295,28 @@ public sealed class LiveHostViewModel : ObservableObject
     /// Moderated standings with a 1-based rank + a gold accent for the leader — the
     /// climbing-leaderboard rows for the big screen.
     public System.Collections.Generic.IReadOnlyList<LiveStandingRow> RankedStandings =>
-        Host.ModeratedStandings.Select((j, i) => new LiveStandingRow(
-            i + 1, j.Name, j.Score,
-            new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(i == 0 ? "#FFC93C" : "#FFFFFF")))).ToList();
+        Host.ModeratedStandings.Select((j, i) =>
+        {
+            // A2.15: how far this table moved since the last scoreboard, on the
+            // between-rounds slide only — the final standings are not a comparison.
+            var mv = HoldStandings && Host.ScoreboardMoves is { } m && m.TryGetValue(j.Name, out var got) ? got : (LiveStandingsMove.Move?)null;
+            var chip = LiveStandingsMove.Label(mv) ?? "";
+            var colour = mv?.Kind switch
+            {
+                LiveStandingsMove.Kind.Up => "#3FCF8E",
+                LiveStandingsMove.Kind.New => "#5B8CFF",
+                _ => "#FFFFFF",
+            };
+            return new LiveStandingRow(i + 1, j.Name, j.Score,
+                new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(i == 0 ? "#FFC93C" : "#FFFFFF")),
+                chip, new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(colour)));
+        }).ToList();
+
+    /// A2.15: the one line the host reads out. Empty when nobody climbed, and on the
+    /// night's first scoreboard.
+    public string BiggestClimbLine =>
+        HoldStandings && Host.ScoreboardMoves is { } m ? LiveStandingsMove.BiggestClimb(m) ?? "" : "";
+    public bool ShowBiggestClimb => BiggestClimbLine.Length > 0;
     // Round-intro moment (3.40): the first question of a round gets a big title band.
     public bool ShowRoundIntro => !Host.Revealed && Host.QuestionInRound.N == 1;
     // Reveal choreography (3.38): the correct option index once revealed (else null).

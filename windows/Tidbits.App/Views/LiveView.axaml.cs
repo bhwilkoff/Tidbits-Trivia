@@ -1874,7 +1874,7 @@ public partial class LiveView : UserControl
             SpeedBonusCheck.IsChecked == true,
             HostPlaysCheck.IsChecked == true,
             HostNameBox.Text,
-            branding, db: data.Rtdb);
+            branding, db: data.Rtdb, remotePin: Services.LaunchHooks.HostRemotePin);
         host.Resuming = resuming;   // A2.13
         var vm = new LiveHostViewModel(host);
         Setup.IsVisible = false;

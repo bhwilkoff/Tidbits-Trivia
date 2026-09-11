@@ -433,6 +433,32 @@ public sealed class LiveNightHost : ObservableObject
 
     private readonly HashSet<string> _hidden = new(); // moderation gate (3.26)
 
+    // A2.15 — the between-rounds scoreboard's movement. Mirrors the Mac's LiveHostSession.
+    /// The standings in rank order at the LAST scoreboard, by team NAME. Null before
+    /// the first scoreboard of the night — nothing to have moved from.
+    private IReadOnlyList<string>? _lastScoreboardRanks;
+    /// The movement shown on the scoreboard that is up now, frozen when it opened.
+    /// Frozen rather than recomputed: scores do not change while the slide is held,
+    /// and a chip that flickers is a lie.
+    public IReadOnlyDictionary<string, LiveStandingsMove.Move>? ScoreboardMoves { get; private set; }
+    /// Bumped every time a scoreboard opens, so a view can notice one it has not shown
+    /// yet without owning the decision.
+    public int ScoreboardEpoch { get; private set; }
+
+    /// A2.15: open the between-rounds scoreboard for the round that just ended.
+    public void OpenRoundScoreboard()
+    {
+        var names = ModeratedStandings.Select(j => j.Name).ToList();
+        ScoreboardMoves = _lastScoreboardRanks is { } prev ? LiveStandingsMove.Moves(prev, names) : null;
+        _lastScoreboardRanks = names;
+        ScoreboardEpoch++;
+        Notify();
+    }
+
+    /// A2.15: true when `Next()` has just crossed from one round into the next, so the
+    /// round that ended earns its scoreboard.
+    public bool CrossedIntoNewRound { get; private set; }
+
     // A2.14 — the joker. Mirrors the Mac's LiveHostSession.
     public bool Joker { get; set; }
     /// The jokers LOCKED per round (0-based) — team NAMES, because a table may be several phones.
@@ -726,8 +752,13 @@ public sealed class LiveNightHost : ObservableObject
         var code = Resuming?.Code;
         if (await Net.Open(Title, code: code, resuming: code is { Length: > 0 }) is null)
             ErrorText = "Couldn't open a room. Check your connection.";
+        if (Net.IsOpen && HarnessRemotePin is { Length: 6 } hp) Net.StartRemote(hp);
         Opening = false; Notify();
     }
+
+    /// G6 harness: pair the phone remote with this PIN when the room opens, so a
+    /// multi-step night can be driven from the wire the way a host's phone drives it.
+    public string? HarnessRemotePin { get; set; }
 
     /// A2.13: set before Start() to pick an interrupted night back up.
     public Store.ResumedNight? Resuming { get; set; }
@@ -875,7 +906,14 @@ public sealed class LiveNightHost : ObservableObject
     {
         if (CurrentStage != Stage.Playing || !Revealed) return;
         Revealed = false; HostChoice = null; Locked = false; _deadline = null;
+        var wasRound = Current?.RoundIndex ?? 0;   // A2.15: remember the round we are leaving
         Index++;
+        CrossedIntoNewRound = Current?.RoundIndex is int nowRound && nowRound > wasRound;
+        // The scoreboard is opened HERE rather than in the view model: the phone remote
+        // (G6) calls Host.Next() directly, so a host driving the night from their phone
+        // — the normal way to run a room — saw no between-rounds scoreboard at all.
+        // Found on the glass on the real Windows box.
+        if (CrossedIntoNewRound) OpenRoundScoreboard();
         if (Current is null) await End();
         else { PrepareQuestion(); ArmRoundTimer(); await PublishCurrent(); SaveResume(); }   // A2.13
         Notify();

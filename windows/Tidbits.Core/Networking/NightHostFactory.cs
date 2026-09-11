@@ -23,7 +23,8 @@ public static class NightHostFactory
         bool hostPlays,
         string? hostName,
         LiveEvent? branding = null,
-        FirebaseRtdb? db = null)
+        FirebaseRtdb? db = null,
+        string? remotePin = null)
     {
         // ONE identity per device: a bare LiveHostNet would mint its own anonymous uid on a
         // cleartext FileTokenStore; the app hands in its DPAPI-backed client instead.
@@ -34,6 +35,7 @@ public static class NightHostFactory
             Archive = Store.NightArchive.Shared.Value,   // A2.12: the night is kept when it ends
             Resume = Store.NightResume.Shared.Value,     // A2.13: …and recoverable while it runs
             Branding = branding,
+            HarnessRemotePin = remotePin,   // G6 harness: a known PIN so a night can be driven
             Joker = branding?.Joker == true,           // A2.14
             HostPlays = hostPlays,
             HostName = string.IsNullOrWhiteSpace(hostName) ? "Host" : hostName!.Trim(),

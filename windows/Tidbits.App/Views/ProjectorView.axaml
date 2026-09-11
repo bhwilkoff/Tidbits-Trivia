@@ -37,6 +37,9 @@
         <Viewbox IsVisible="{Binding ShowBigScreenStandings}" Margin="120,80" Stretch="Uniform">
             <StackPanel Width="1100" Spacing="16">
                 <TextBlock Text="{Binding StandingsHeadline}" Foreground="{Binding BrandBrush}" FontSize="64" FontWeight="Black" HorizontalAlignment="Center"/>
+                <!-- A2.15: the one line the host reads out; silent when nobody climbed. -->
+                <TextBlock IsVisible="{Binding ShowBiggestClimb}" Text="{Binding BiggestClimbLine}" Foreground="#FF5C35"
+                           FontSize="30" FontWeight="Black" HorizontalAlignment="Center"/>
                 <StackPanel IsVisible="{Binding HasNoStandings}" Spacing="10" HorizontalAlignment="Center">
                     <TextBlock Text="No scores yet" Foreground="White" Opacity="0.75"
                                FontSize="40" FontWeight="Black" HorizontalAlignment="Center"/>
@@ -47,10 +50,13 @@
                 <ItemsControl ItemsSource="{Binding RankedStandings}" x:CompileBindings="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="90,*,Auto" Margin="0,7">
+                            <Grid ColumnDefinitions="90,Auto,*,Auto" Margin="0,7">
                                 <TextBlock Text="{Binding Rank}" Foreground="{Binding RankColor}" FontSize="46" FontWeight="Black"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="White" FontSize="46" FontWeight="Bold" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="2" Text="{Binding Score}" Foreground="White" FontSize="46" FontWeight="Black" VerticalAlignment="Center"/>
+                                <!-- A2.15: how far this table moved since the last scoreboard. -->
+                                <TextBlock Grid.Column="1" IsVisible="{Binding HasMove}" Text="{Binding Move}" Foreground="{Binding MoveColor}"
+                                           FontSize="32" FontWeight="Black" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Name}" Foreground="White" FontSize="46" FontWeight="Bold" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Text="{Binding Score}" Foreground="White" FontSize="46" FontWeight="Black" VerticalAlignment="Center"/>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

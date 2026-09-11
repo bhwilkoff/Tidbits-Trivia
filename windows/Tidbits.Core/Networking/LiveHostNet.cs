@@ -262,9 +262,10 @@ public sealed class LiveHostNet
 
     /// Pair a remote. The PIN is shown on the LAPTOP only — the room code is
     /// printed on the projector, so it authorises nothing.
-    public string StartRemote()
+    public string StartRemote(string? pin = null)
     {
-        if (RemotePin.Length == 0) RemotePin = LiveRemote.MakePin();
+        if (pin is { Length: 6 }) RemotePin = pin;
+        else if (RemotePin.Length == 0) RemotePin = LiveRemote.MakePin();
         return RemotePin;
     }
     public void StopRemote() => RemotePin = "";

@@ -133,6 +133,7 @@
 		58D69F6CD06518853ACBCE55 /* NightProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2188212D23A7B95BDD7D6ED6 /* NightProtocol.swift */; };
 		59C5C5FB241F5187A86BAA16 /* StandingsOutcome.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD22A030E767FF54F1498CFD /* StandingsOutcome.swift */; };
 		59D256948B5B5274143860D9 /* MacLiveLibrary_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08E9A757230F2C390FADC87 /* MacLiveLibrary_macOS.swift */; };
+		59D620A19E375D9FC3A76795 /* LiveStandingsMoveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FCE99E97B495CF5B29BCFC /* LiveStandingsMoveTests.swift */; };
 		5B37FF3AF882A4CAD88CE62D /* GameComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337562191FABFA21A46484FA /* GameComponents.swift */; };
 		5B838192AE2C410B06306AAD /* LiveHostNet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A6236DA6CAC7451F433FB4B /* LiveHostNet.swift */; };
 		5D6B1E41F97FDFB4C2D72E96 /* ShotsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E78A4C074AFD8ACB1C3841D /* ShotsApp.swift */; };
@@ -226,6 +227,7 @@
 		A258EFA181259798F1331D1E /* GameCenterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A31C82C50C6EB1DA9AE9A4 /* GameCenterManager.swift */; };
 		A288654C00A9D1A45DE29B16 /* LinkWallModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5762EC669C200A7DB6B30036 /* LinkWallModels.swift */; };
 		A3AB3395EC3EA1DFA7EB378B /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB6E2342A764B8401C9516E9 /* Design.swift */; };
+		A3CB9490D2287BA04F39B407 /* LiveStandingsMove.swift in Sources */ = {isa = PBXBuildFile; fileRef = D691E54BA58048E99767AD37 /* LiveStandingsMove.swift */; };
 		A3CEE805C4A1AB9149A32621 /* NightPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */; };
 		A478F1F2C6EAB396BFAC8230 /* LiveEventFileGoldenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CFACF3B7DD9EA119F7D087D /* LiveEventFileGoldenTests.swift */; };
 		A49642CF7E24E793FBDCDD7D /* pack.json in Resources */ = {isa = PBXBuildFile; fileRef = 5631553A4052245C4AB131A1 /* pack.json */; };
@@ -344,6 +346,7 @@
 		E839F9D0B29619B6DE3EE31F /* WeakSpotArenaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D23AA83F3E24D89232F483D /* WeakSpotArenaTests.swift */; };
 		EA563FC29ADA0D2185256994 /* MacLiveNights_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA4099317EDE3F7B083A7D0 /* MacLiveNights_macOS.swift */; };
 		EAC2294177981789AC4770B7 /* GameView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */; };
+		EB8E0D5D6F943A20FD916C00 /* LiveStandingsMove.swift in Sources */ = {isa = PBXBuildFile; fileRef = D691E54BA58048E99767AD37 /* LiveStandingsMove.swift */; };
 		EBC70739B98EC251709918E4 /* ClubProductsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0DF64BF315C94E0A5EBA94 /* ClubProductsTests.swift */; };
 		EE10E44A0A8622D1D3AE45D8 /* LinkWall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D78A8CAF758B68B28B38A7A /* LinkWall.swift */; };
 		EE8626F023BDE890D701F4B1 /* ContentView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */; };
@@ -546,6 +549,7 @@
 		8DB72467F6FC9357D820FC74 /* LiveBreak.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveBreak.swift; sourceTree = "<group>"; };
 		8E0122AFA7F2570D4CCDD4BA /* ContentView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView_iOS.swift; sourceTree = "<group>"; };
 		911D668CBB103D9A879A9CE0 /* IntentInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentInbox.swift; sourceTree = "<group>"; };
+		92FCE99E97B495CF5B29BCFC /* LiveStandingsMoveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveStandingsMoveTests.swift; sourceTree = "<group>"; };
 		935F34F61316C466D3D8142F /* DeepLinkParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkParseTests.swift; sourceTree = "<group>"; };
 		943138542896823C08060CF6 /* LivePictureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivePictureView.swift; sourceTree = "<group>"; };
 		957EC5C411DA454D5E50FBEF /* LiveClipTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveClipTests.swift; sourceTree = "<group>"; };
@@ -610,6 +614,7 @@
 		D490C60AA88C077AEEE3BDB3 /* NightHostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightHostView.swift; sourceTree = "<group>"; };
 		D50CC8FE4C2A40751C616B5F /* NightLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLink.swift; sourceTree = "<group>"; };
 		D5F412F87DD07A7DEC350B8C /* MessagesFinishTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesFinishTests.swift; sourceTree = "<group>"; };
+		D691E54BA58048E99767AD37 /* LiveStandingsMove.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveStandingsMove.swift; sourceTree = "<group>"; };
 		D7622E91CE8A88F2E3A6D8F2 /* LiveNightReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNightReport.swift; sourceTree = "<group>"; };
 		D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerRecord.swift; sourceTree = "<group>"; };
 		D8B210F7394E140EC3387129 /* MacLiveJoin_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveJoin_macOS.swift; sourceTree = "<group>"; };
@@ -654,7 +659,7 @@
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FEA4099317EDE3F7B083A7D0 /* MacLiveNights_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveNights_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_0A576F6C-8DDE-47AF-BC69-FDE1C7961FE9" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_870CC335-1278-4D9A-AF02-41EA2F7560E2" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -756,6 +761,7 @@
 				4736749BDA4B75D70E487C47 /* LiveJoker.swift */,
 				CB422FF5DDA6AEB016CAA7C3 /* LiveLetterRound.swift */,
 				E8D30BCE955E7F9E4F157A4F /* LiveRemote.swift */,
+				D691E54BA58048E99767AD37 /* LiveStandingsMove.swift */,
 				3CD6633468D016A9F99C33D9 /* LiveTeamRoster.swift */,
 				C67A9AF36A215C29ACBDCB34 /* MarathonModels.swift */,
 				A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */,
@@ -824,6 +830,7 @@
 				B3CF3E63B812F9731CFE0A89 /* LiveProgressTests.swift */,
 				3E89008CAC21BEDE74130128 /* LiveRecapTests.swift */,
 				9A7FDAD221DB1F358BF1C44A /* LiveRemoteTests.swift */,
+				92FCE99E97B495CF5B29BCFC /* LiveStandingsMoveTests.swift */,
 				84408B136B979EA2A841B1A4 /* LiveTeamRosterTests.swift */,
 				F0DBFCFA8DB42E1A13A12E0D /* LiveTextFormatsTests.swift */,
 				394058FA373BFBF21E2A2C53 /* LiveTextReviewTests.swift */,
@@ -1125,10 +1132,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_D54F49F2-E244-4F33-80F9-5D8FE7F8A1CE" /* Tidbits-Trivia */ = {
+		"TEMP_68DEBBD1-F55C-4A7D-BE48-4A2B59C5E8FE" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_0A576F6C-8DDE-47AF-BC69-FDE1C7961FE9" /* AppVersion.xcconfig */,
+				"TEMP_870CC335-1278-4D9A-AF02-41EA2F7560E2" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -1430,6 +1437,8 @@
 				FE85E2C557A5C63582C10B75 /* LiveRemoteTests.swift in Sources */,
 				C1DE024CBF206CDDE8F875FB /* LiveRoom.swift in Sources */,
 				2183D4F23FC3C37E10522479 /* LiveSourceLine.swift in Sources */,
+				A3CB9490D2287BA04F39B407 /* LiveStandingsMove.swift in Sources */,
+				59D620A19E375D9FC3A76795 /* LiveStandingsMoveTests.swift in Sources */,
 				1CD232085F7BF269354BC403 /* LiveTeamRoster.swift in Sources */,
 				3DB55DD2CC71635A52100B64 /* LiveTeamRosterTests.swift in Sources */,
 				35ACBA434AEFB739D0AD3217 /* LiveTextFormatsTests.swift in Sources */,
@@ -1587,6 +1596,7 @@
 				DFC2A8C391B783E46005D316 /* LiveRemoteView.swift in Sources */,
 				A93C3882E397A32AEE50B0FE /* LiveRoom.swift in Sources */,
 				051B6890DB2122B5D992C350 /* LiveSourceLine.swift in Sources */,
+				EB8E0D5D6F943A20FD916C00 /* LiveStandingsMove.swift in Sources */,
 				A65531B8AC988FBB3C435CCE /* LiveTeamRoster.swift in Sources */,
 				1E61B04B5E7AB5ABD7297B54 /* MacHomeSheets_macOS.swift in Sources */,
 				B0A240BB11DEDEDCE5B142EE /* MacLiveBigScreen_macOS.swift in Sources */,
@@ -1782,7 +1792,7 @@
 		};
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_0A576F6C-8DDE-47AF-BC69-FDE1C7961FE9" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_870CC335-1278-4D9A-AF02-41EA2F7560E2" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1947,7 +1957,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_0A576F6C-8DDE-47AF-BC69-FDE1C7961FE9" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_870CC335-1278-4D9A-AF02-41EA2F7560E2" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

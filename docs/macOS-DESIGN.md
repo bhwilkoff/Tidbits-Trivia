@@ -155,6 +155,23 @@ reveal, when it stops being news. Like every big-screen element it is a switch
 (A8.7); the text is one pure function shared with Windows, so the two projectors
 cannot word it differently.
 
+A2.15 **The round scoreboard shows MOVEMENT, and opens by itself** (2026-09-10).
+The between-rounds scoreboard is the ritual moment of a pub quiz, and it was
+doing half its job: a bare list of scores throws away the part the room reacts
+to. Not "we have 14" but "we were fifth and now we're second". Every table's
+row now carries how far it moved since the LAST scoreboard — ▲2 in the go
+colour, ▼1 quietly (a table that slipped one place is not being told off), NEW
+in blue for a table that joined mid-night, — for no change — and the slide
+names the biggest climb in one line the host can read out. Nothing is shown on
+the night's FIRST scoreboard: everyone would read "NEW", which is noise, not
+news. The movement is FROZEN when the scoreboard opens rather than recomputed,
+because scores do not change while the slide is held and a chip that flickers
+is a lie. And the scoreboard opens BY ITSELF when the host crosses into a new
+round — the ritual should not depend on the host remembering a button — held
+until they dismiss it, exactly like the wager round's hold (A3.9). It opens on
+every path into "next", including the phone remote: a host running the room
+from their phone is the normal case, not the exception.
+
 A2.14 **The joker — one round per table, named before it starts, worth double**
 (2026-09-10). The oldest trick in the pub quiz, and the one decision of the night
 the TABLE makes rather than the host. When the event's Joker switch is on, every

@@ -558,6 +558,16 @@ struct LiveBigScreen_macOS: View {
     }
 
     struct UnifiedStanding: Identifiable { let id: String; let name: String; let score: Int; let paper: Bool }
+    /// A2.15: up is the brand's go colour, down is quiet rather than alarming — a
+    /// table that slipped one place is not being told off.
+    private func moveColor(_ m: LiveStandingsMove.Move?) -> Color {
+        switch m {
+        case .some(.up): return Tidbits.Palette.mint
+        case .some(.new): return Tidbits.Palette.blue
+        default: return Tidbits.Palette.inkSoft
+        }
+    }
+
     private func unifiedStandings(_ s: LiveHostSession) -> [UnifiedStanding] {
         var rows: [UnifiedStanding] = []
         if let net = coordinator.net {
@@ -603,9 +613,19 @@ struct LiveBigScreen_macOS: View {
                 // Between rounds the headline is the POSITION, not a winner: naming
                 // a champion mid-night is wrong, and the celebration belongs to the
                 // final slide.
-                Text(s.scoredRoundNumber == 0 ? "STANDINGS" : "SCORES AFTER ROUND \(s.scoredRoundNumber)")
-                    .font(.system(size: 52, weight: .black, design: .rounded))
-                    .foregroundStyle(Tidbits.Palette.ink)
+                VStack(spacing: 6) {
+                    Text(s.scoredRoundNumber == 0 ? "STANDINGS" : "SCORES AFTER ROUND \(s.scoredRoundNumber)")
+                        .font(.system(size: 52, weight: .black, design: .rounded))
+                        .foregroundStyle(Tidbits.Palette.ink)
+                    // A2.15: the one line a host reads out loud. Silent when nobody
+                    // climbed, and on the night's first scoreboard.
+                    if let moves = s.scoreboardMoves, let climb = LiveStandingsMove.biggestClimb(moves) {
+                        Text(climb.uppercased())
+                            .font(.system(size: 26, weight: .heavy, design: .rounded))
+                            .foregroundStyle(Tidbits.Palette.coral)
+                            .accessibilityIdentifier("big.biggestClimb")
+                    }
+                }
             } else if let winner = rows.first, winner.score > 0 {
                 HStack(spacing: 16) {
                     Image(systemName: "party.popper.fill").font(.system(size: 40)).foregroundStyle(Tidbits.Palette.coral)
@@ -637,9 +657,19 @@ struct LiveBigScreen_macOS: View {
             ForEach(Array(rows.prefix(8).enumerated()), id: \.element.id) { i, team in
                 HStack(spacing: 20) {
                     Text("\(i + 1)").font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 60)
-                    if i == 0 { Image(systemName: "crown.fill").font(.system(size: 34)).foregroundStyle(Tidbits.Palette.yellow) }
+                    // The leader's crown was Palette.yellow on the yellow leader row —
+                    // invisible, and the one row it exists for (legibility-check-compositing).
+                    if i == 0 { Image(systemName: "crown.fill").font(.system(size: 34)).foregroundStyle(Tidbits.Palette.ink) }
                     Image(systemName: team.paper ? "pencil" : "iphone").font(.system(size: 22)).foregroundStyle(Tidbits.Palette.inkSoft)
                     Text(team.name).font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).lineLimit(1).minimumScaleFactor(0.5)
+                    // A2.15: how far this table moved since the last scoreboard — the
+                    // half of a between-rounds slide the room actually reacts to.
+                    if interim, let chip = LiveStandingsMove.label(s.scoreboardMoves?[team.name]) {
+                        Text(chip)
+                            .font(.system(size: 26, weight: .black, design: .rounded).monospacedDigit())
+                            .foregroundStyle(moveColor(s.scoreboardMoves?[team.name]))
+                            .accessibilityIdentifier("big.move")
+                    }
                     Spacer()
                     Text("\(team.score)").font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                 }

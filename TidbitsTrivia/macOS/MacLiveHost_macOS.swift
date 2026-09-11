@@ -53,6 +53,29 @@ final class LiveHostSession {
     var deadlineMs: Int? = nil   // Wave A: epoch-ms countdown deadline for the current timed question
     var locked = false           // Wave C: answers locked ("pencils down") — auto-set at the timer deadline or manually
     var blockedTeams: Set<String> = []   // Wave C: networked team uids the host hid from the big screen (a bad name)
+    /// A2.15: the standings in rank order at the LAST between-rounds scoreboard, by
+    /// team NAME (a table may be several phones; a paper team has no uid). nil before
+    /// the first scoreboard of the night — nothing to have moved from.
+    var lastScoreboardRanks: [String]?
+    /// A2.15: the round the last scoreboard was taken after, so the slide can say
+    /// "since round 2" rather than implying the movement is since the start.
+    var lastScoreboardRound = 0
+
+    /// A2.15: the movement shown on the scoreboard that is up now, frozen when it
+    /// opened. nil on the first scoreboard of the night (nothing to have moved from)
+    /// and whenever no scoreboard is up. Frozen rather than recomputed because scores
+    /// do not change while the slide is held, and a chip that flickers is a lie.
+    var scoreboardMoves: [String: LiveStandingsMove.Move]?
+
+    /// A2.15: open the between-rounds scoreboard for the round just finished.
+    /// `currentRanks` are the team NAMES in rank order right now.
+    func openRoundScoreboard(currentRanks: [String], round: Int) {
+        scoreboardMoves = lastScoreboardRanks.map { LiveStandingsMove.moves(previous: $0, current: currentRanks) }
+        lastScoreboardRanks = currentRanks
+        lastScoreboardRound = round
+        showScores = true
+    }
+
     /// A2.14: the jokers LOCKED per round (0-based) — team NAMES, because a table may
     /// be several phones. Filled once, when the round's first question goes out.
     var jokersPlayed: [Int: Set<String>] = [:]
@@ -535,6 +558,23 @@ struct LiveHostContainer_macOS: View {
         }
         _session = State(initialValue: s)
     }
+    /// A2.15: the host has just crossed into a NEW round, so the round that ended gets
+    /// its scoreboard — the ritual moment of a pub quiz, and the one the host used to
+    /// have to remember to press. Same shape as the wager round's hold (A3.9): it stays
+    /// up until the host hides it.
+    private func openScoreboardIfRoundEnded(from oldIndex: Int) {
+        let questions = session.questions
+        guard questions.indices.contains(oldIndex), let now = session.current else { return }
+        let was = questions[oldIndex].roundIndex ?? 0
+        guard let nowRound = now.roundIndex, nowRound > was else { return }
+        var ranked: [(name: String, score: Int)] = net.joinedTeams
+            .filter { !session.blockedTeams.contains($0.id) }
+            .map { (name: $0.name, score: $0.score) }
+        ranked += session.teams.map { (name: $0.name, score: $0.score) }
+        let names = ranked.sorted { $0.score == $1.score ? $0.name < $1.name : $0.score > $1.score }.map(\.name)
+        session.openRoundScoreboard(currentRanks: names, round: was + 1)
+    }
+
     /// A2.14: the round's first question is out — its jokers are locked.
     private func lockJokersIfRoundStart() {
         guard session.questionInRound.n == 1 else { return }
@@ -761,8 +801,9 @@ struct LiveHostContainer_macOS: View {
         }
         .onChange(of: session.rescoreRequested) { _, _ in Task { await rescoreCurrent() } }   // A3.13
         // Re-publish whenever the host advances or reveals; auto-score on reveal.
-        .onChange(of: session.index) { _, _ in
+        .onChange(of: session.index) { old, _ in
             if let q = session.current { LivePlayedLog.shared.record([q.id], night: event.name) }
+            openScoreboardIfRoundEnded(from: old)   // A2.15: the between-rounds ritual
             lockJokersIfRoundStart()   // A2.14: the picks for this round are final once its first question is out
             Task { await net.publish(session.currentPub()); await syncMedia() }
         }

@@ -48,6 +48,10 @@ public static class LaunchHooks
     /// TIDBITS_LIVE_JOKER=<round index> — play the joker on that round right after joining
     /// (A2.14); a ComboBox nothing on the bench can drive otherwise.
     public static int? LiveJoker => int.TryParse(Env("TIDBITS_LIVE_JOKER"), out var r) ? r : null;
+    /// TIDBITS_LIVE_REMOTE_PIN on a HOST — pair the phone remote at launch with this PIN,
+    /// so a harness can drive the cockpit the way a host's phone does (the Mac twin).
+    /// Without it a multi-step night could only be driven by one-shot NEXT_AT hooks.
+    public static string? HostRemotePin => Env("TIDBITS_LIVE_REMOTE_PIN") is { Length: 6 } p ? p : null;
 
     /// TIDBITS_LIVE_NAME=<name> — the display name to join under. Without it several
     /// devices join under one default name and the host cannot tell them apart, which

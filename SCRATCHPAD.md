@@ -7,6 +7,39 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-10d) — the round scoreboard moves, and opens by itself (A2.15 / 3.83)
+
+**Did:** the between-rounds slide was doing half its job — a list of scores with
+no sense of who climbed. Every row now carries its movement since the LAST
+scoreboard (▲2 mint / ▼1 quiet / NEW blue / —) and the slide names the biggest
+climb in one line the host reads out. Frozen when the slide opens (scores do not
+change while it is held; a flickering chip is a lie) and silent on the night's
+first scoreboard, where everyone would read "NEW". The scoreboard also opens BY
+ITSELF at a round boundary now, held until the host dismisses it — the same
+shape as the wager hold (A3.9). `LiveStandingsMove` is pure and byte-identical
+on Swift and C# (6 Swift Testing + 6 xUnit). 1.9.38 (168), Android vc 129.
+
+**Verified on the REAL Mac and the REAL Windows box** (`scratchpad/e2e_movement.py`,
+a three-round night 1+2+1 where Table B overtakes Table A in round 2, driven
+end to end by the PHONE REMOTE): both projectors read "SCORES AFTER ROUND 2 ·
+Biggest climb: Table B up 1" with Table B ▲1 and Table A ▼1, and the first
+boundary's scoreboard correctly showed no chips at all.
+
+**Found on the glass — three real bugs:**
+1. **Windows: the phone remote got no scoreboard.** The first cut opened it in
+   the view model's `Next()`, but the remote calls `Host.Next()` directly — so a
+   host running the room from their phone, the normal case, saw nothing. The
+   decision moved into Core's `Next()`, where every path goes through it.
+2. **The leader's crown was invisible** — `Palette.yellow` on the yellow leader
+   row, the one row it exists for.
+3. **The Mac projector could not be photographed twice.** `macapp.capture()`
+   calls `close_projectors()` for a cockpit shot, so ONE cockpit capture killed
+   every projector shot after it; and `AXRaise` alone reorders windows within
+   the app, so a capture graded this terminal's right half over the projector
+   (`screen-region-grades-the-screen`, again). `capture(projector=True)` now
+   activates the app first, and harnesses take the projector shot before any
+   cockpit shot.
+
 ## Current state (2026-09-10c) — the joker reaches every joiner, and the Mac joiner can finally answer
 
 **Did:** A2.14's picker on the four joiners it was missing from — tvOS (a row

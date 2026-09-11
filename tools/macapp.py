@@ -341,6 +341,13 @@ def capture(pid, path, tries=12, projector=False):
     park_cursor()
     for _ in range(tries):
         if projector:
+            # The APP has to come forward before its window is raised. AXRaise alone
+            # reorders windows WITHIN the app, so a terminal in front of everything
+            # stayed in front — and `screencapture -R` grabs a SCREEN rectangle, so a
+            # measured run photographed the projector's left half and this terminal's
+            # right half (screen-region-grades-the-screen, again).
+            _osa('tell application "System Events" to set frontmost of '
+                 f'(first process whose unix id is {pid}) to true')
             idx = projector_window_index(pid)
             if idx is not None:
                 _osa('tell application "System Events" to tell '

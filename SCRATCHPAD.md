@@ -7,6 +7,44 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-10c) — the joker reaches every joiner, and the Mac joiner can finally answer
+
+**Did:** A2.14's picker on the four joiners it was missing from — tvOS (a row
+of focusable round buttons; no Menu at ten feet), Android (M3 `FilterChip`s +
+`liveJoker`/`liveJokerGet` on `FirebaseNet` and `jokerRounds` parsed, which it
+was not), Windows (a `ComboBox` above every answer shape, `LivePlayerClient.
+PlayJoker`) and the Mac joiner (a `Picker`). Each reads the pick back on join
+and turns into a quiet "played on Round N" line once that round has begun.
+`TIDBITS_LIVE_JOKER=<round>` on all of them (hooks-are-coverage: a picker
+nothing can drive is untested). 1.9.37 (167), Android vc 128.
+
+**Found on the way — the Mac joiner could not answer anything but multiple
+choice.** A Name It question showed "Click your answer." over empty space; so
+did closest-call, ordering, matching and enumerate, and a buzz round had no
+buzzer. The five answer views were `private` inside the iOS file. Moved to
+`Core/Views/LiveAnswerViews.swift` (`#if os(iOS) || os(macOS)`) and the Mac
+joiner now renders every shape the wire can send, plus the buzz button and the
+reveal colouring. A joiner that cannot answer a whole question type is not a
+joiner.
+
+**Also:** `android-build.yml` now uploads the debug APK as an artifact — the
+bench can install a CI-built APK without Gradle ever running on the Mac
+(`gh run download <id> -n app-debug-apk`). Both devices were on an older
+locally-signed debug build, so this needed one uninstall first.
+
+**Verified on the glass:** the Mac hosted and the Windows box + the onn Android
+TV dongle joined with the hook — both picks landed and the Mac cockpit badged
+"Windows Table JOKER · R2"; the Windows box hosted and the Mac joined the same
+way (Windows cockpit badge "Mac JOKER · R2", and the Mac joiner photographed
+with its joker picker AND a working text field on a Name It question). The
+onn's chip reads "Round 2 — Movies" on the dark TV joiner.
+
+**Blocked, not skipped:** the Pixel 8a answers adb but is wedged on its
+`NotificationShade` — back/home/wake/swipe all leave focus there, so it could
+not be driven this tick. Android is covered on the glass by the onn dongle;
+the Pixel needs the owner to unlock it once (see
+`pixel-wireless-pairing-lapses`).
+
 ## Current state (2026-09-10b) — the joker: one round per table, named before it starts, worth double (A2.14 / 3.81)
 
 **Did:** the pub-quiz staple no other row covered. Event switch "Teams play a

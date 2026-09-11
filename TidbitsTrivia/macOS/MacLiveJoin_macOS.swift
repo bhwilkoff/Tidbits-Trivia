@@ -227,28 +227,63 @@ struct MacLiveJoinView_macOS: View {
                 LiveClipView(media: m, code: client.code).id(pub.qid + m.url).frame(maxWidth: 640)
             }
 
+            answerSurface(pub).frame(maxWidth: 640)
+
+            Text(client.hasAnswered ? "Answer locked in."
+                 : pub.locked == true ? "Answers locked — pencils down!"
+                 : pub.options != nil ? "Click your answer." : "Answer below.")
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(pub.locked == true && !client.hasAnswered ? Tidbits.Palette.coral : Tidbits.Palette.inkSoft)
+        }
+        .padding(24)
+    }
+
+    /// Every answer shape, the same views the iPhone uses (Core `LiveAnswerViews`).
+    /// Until 2026-09-10 the Mac joiner drew multiple choice and nothing else, so a
+    /// Name It question read "Click your answer." over an empty space.
+    @ViewBuilder private func answerSurface(_ pub: LiveRoom.Pub) -> some View {
+        let revealed = pub.phase == LiveRoom.Phase.reveal
+        let locked = revealed || client.hasAnswered || pub.locked == true
+        if pub.board != nil, pub.phase == LiveRoom.Phase.board {
+            Text("The room is picking a category — watch the big screen.").font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
+        } else if pub.buzz == true, !revealed {
+            if locked {
+                Text("Buzzed — wait for the host").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.mint)
+            } else {
+                Button { Task { await client.submitBuzz() } } label: {
+                    Text("BUZZ").font(.system(size: 40, weight: .black, design: .rounded)).frame(maxWidth: .infinity).padding(.vertical, 24)
+                }
+                .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
+            }
+        } else if let n = pub.numeric {
+            LiveNumericAnswer(spec: n, locked: locked) { v in Task { await client.submit(number: v) } }.id(pub.qid)
+        } else if let items = pub.orderItems, !items.isEmpty {
+            LiveOrderingAnswer(items: items, locked: locked) { o in Task { await client.submit(order: o) } }.id(pub.qid)
+        } else if let keys = pub.matchKeys, let values = pub.matchValues, !keys.isEmpty {
+            LiveMatchingAnswer(keys: keys, values: values, locked: locked) { pr in Task { await client.submit(pairs: pr) } }.id(pub.qid)
+        } else if pub.enumTarget != nil {
+            LiveEnumerateAnswer(target: pub.enumTarget ?? 0, locked: locked) { l in Task { await client.submit(list: l) } }.id(pub.qid)
+        } else if let options = pub.options, !options.isEmpty {
             // Two columns: a Mac window is wide, and a single stacked column of four
             // options wastes the measure the platform actually has.
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12),
                                 GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                ForEach(Array((pub.options ?? []).enumerated()), id: \.offset) { i, opt in
+                ForEach(Array(options.enumerated()), id: \.offset) { i, opt in
+                    let correct = revealed && pub.poll != true && pub.answerIndex == i
+                    let chosen = client.chosen == i
                     Button { Task { await client.submit(choice: i) } } label: {
                         Text(opt).font(Tidbits.TypeRamp.l3)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 12).padding(.horizontal, 14)
                     }
                     .buttonStyle(ChunkyButtonStyle(
-                        fill: client.chosen == i ? Tidbits.Palette.coral : Tidbits.Palette.surface,
-                        textColor: client.chosen == i ? .white : Tidbits.Palette.ink))
-                    .disabled(client.hasAnswered)
+                        fill: correct ? Tidbits.Palette.mint : chosen ? Tidbits.Palette.coral : Tidbits.Palette.surface,
+                        textColor: correct || chosen ? .white : Tidbits.Palette.ink))
+                    .disabled(locked)
                 }
             }
-            .frame(maxWidth: 640)
-
-            Text(client.hasAnswered ? "Answer locked in." : "Click your answer.")
-                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+        } else {
+            LiveTextAnswer(locked: locked) { t in Task { await client.submit(text: t) } }.id(pub.qid)
         }
-        .padding(24)
     }
 }
 #endif

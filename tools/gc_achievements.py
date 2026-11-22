@@ -11,7 +11,7 @@ three-step reserve/upload/commit asset flow, and the achievements are valid and
 submittable without it. `branding/gamecenter/` holds the 512x512 files for
 whoever adds them.
 
-    export ASC_KEY_ID=... ASC_ISSUER_ID=...
+    (the key comes from the environment or the login Keychain: tools/asc_key.py)
     python3 tools/gc_achievements.py            # create what's missing
     python3 tools/gc_achievements.py --dry-run
 """

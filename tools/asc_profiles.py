@@ -5,8 +5,8 @@ because cloud-managed signing fails for this team's API key ("Cloud signing perm
 though the key can create certs/profiles directly via the REST API.
 
 Usage:  asc_profiles.py <ios|tvos|mac> <distCertId> <bundleId> [bundleId ...]
-Env:    ASC_KEY_ID, ASC_ISSUER_ID, and the .p8 at ~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8
-        (or ASC_KEY_PATH). No secrets are written to the repo; profiles install to
+Env:    ASC_KEY_ID, ASC_ISSUER_ID, and the .p8 come from the environment or the login Keychain (tools/asc_key.py).
+        No secrets are written to the repo; profiles install to
         ~/Library/MobileDevice/Provisioning Profiles/.
 """
 import sys, os, time, json, base64, urllib.request, urllib.error, urllib.parse
@@ -16,12 +16,13 @@ PROFILE_TYPE = {"ios": "IOS_APP_STORE", "tvos": "TVOS_APP_STORE", "mac": "MAC_AP
 EXT = {"ios": "mobileprovision", "tvos": "mobileprovision", "mac": "provisionprofile"}
 
 def token():
-    kid = os.environ["ASC_KEY_ID"]; iss = os.environ["ASC_ISSUER_ID"]
-    kp = os.environ.get("ASC_KEY_PATH", os.path.expanduser(f"~/.appstoreconnect/private_keys/AuthKey_{kid}.p8"))
-    key = open(kp).read()
+    import asc_key
+    kid = asc_key.value("ASC_KEY_ID") or sys.exit("no ASC_KEY_ID (environment or Keychain)")
+    iss = asc_key.value("ASC_ISSUER_ID") or sys.exit("no ASC_ISSUER_ID (environment or Keychain)")
+    pem = asc_key.key_pem(kid)
     now = int(time.time())
     return jwt.encode({"iss": iss, "iat": now, "exp": now + 600, "aud": "appstoreconnect-v1"},
-                      key, algorithm="ES256", headers={"kid": kid, "typ": "JWT"})
+                      pem, algorithm="ES256", headers={"kid": kid, "typ": "JWT"})
 
 def api(method, path, body=None, attempts=4):
     """One ASC call, retrying Apple's 5xx.

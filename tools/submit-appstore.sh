@@ -7,6 +7,7 @@
 #   tools/submit-appstore.sh <ios|tvos|all>
 set -euo pipefail
 cd "$(dirname "$0")/.."
+if [ -z "${ASC_KEY_PATH:-}" ] && [ -z "${ASC_KEY_ID:-}" ]; then exec tools/with_asc.sh tools/submit-appstore.sh "$@"; fi
 
 # ===== per-app config (the ONLY per-repo difference) =====
 PROJECT_FLAG=(-project "TidbitsTrivia.xcodeproj")   # or (-workspace "Foo.xcworkspace")
@@ -47,7 +48,7 @@ case "$DEV" in *[Bb]eta*) echo "REFUSING beta Xcode ($DEV) — App Review reject
 [ -x "$DEV/usr/bin/xcodebuild" ] || { echo "No released Xcode at $DEV"; exit 1; }
 
 # --- credentials (App Store Connect API key) ----------------------------------------------------
-[ -f "tools/asc-credentials.env" ] && { set -a; . "tools/asc-credentials.env"; set +a; }
+# The key comes from tools/with_asc.sh (login Keychain) or the CI environment, see the top of the script.
 : "${ASC_KEY_ID:?set ASC_KEY_ID}"; : "${ASC_ISSUER_ID:?set ASC_ISSUER_ID}"
 KEY="${ASC_KEY_PATH:-$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8}"
 [ -f "$KEY" ] || { echo "Missing API key at $KEY"; exit 1; }

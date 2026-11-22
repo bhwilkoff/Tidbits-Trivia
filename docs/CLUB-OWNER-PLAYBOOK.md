@@ -28,7 +28,7 @@
   required first uploading a **billing-enabled AAB** — Play gates all in-app product
   creation on a build declaring the BILLING permission; the prior Play build predated
   Play Billing. Built + signed + uploaded **vc74 (1.6.51) to the Internal track** via
-  `tools/submit-play.sh` (service account `~/.config/play/archivewatch-play.json`).*
+  `tools/submit-play.sh` (service account from the login Keychain).*
 
 **REMAINING — owner only:**
 1. **Apple:** add a **review screenshot** (the paywall) to each of the 3 products and

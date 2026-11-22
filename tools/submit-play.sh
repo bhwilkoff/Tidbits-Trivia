@@ -8,8 +8,8 @@
 #
 # One-time setup (the only thing not already in place):
 #   A Google Play Developer API service-account JSON key, with release permission for the app granted
-#   in Play Console (Users and permissions). Put it at ~/.config/play/archivewatch-play.json (or set
-#   PLAY_SERVICE_ACCOUNT_JSON). It belongs in NO git repo.
+#   in Play Console (Users and permissions). It lives in the login Keychain
+#   (archivewatch:PLAY_SERVICE_ACCOUNT_JSON, read by tools/asc_key.py); CI sets PLAY_SERVICE_ACCOUNT_JSON. It belongs in NO git repo.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -27,8 +27,12 @@ done
 
 export PLAY_PACKAGE="com.tidbitstrivia.app"
 GRADLE="android/app/build.gradle.kts"
-KEY="${PLAY_SERVICE_ACCOUNT_JSON:-$HOME/.config/play/tidbits-play.json}"
-[ -f "$KEY" ] || { echo "Missing service-account JSON at $KEY (see setup notes at top)"; exit 1; }
+if [ -z "${PLAY_SERVICE_ACCOUNT_JSON:-}" ] || [ ! -f "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+  PLAYDIR="$(mktemp -d)"; trap 'rm -rf "$PLAYDIR"' EXIT; chmod 700 "$PLAYDIR"
+  python3 tools/asc_key.py write-play "$PLAYDIR/play.json" || { echo "No Play service account in the Keychain (see setup notes at top)"; exit 1; }
+  export PLAY_SERVICE_ACCOUNT_JSON="$PLAYDIR/play.json"
+fi
+KEY="$PLAY_SERVICE_ACCOUNT_JSON"
 
 # Bump versionCode (+1) — Play rejects any previously-uploaded versionCode, even unreleased ones.
 if [ "$BUMP" = 1 ]; then

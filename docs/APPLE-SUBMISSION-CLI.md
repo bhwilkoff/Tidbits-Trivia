@@ -137,9 +137,16 @@ buries a `5 unassigned children` warning in the build log, and emits no
 
 ## Credentials
 
-**They live in GitHub secrets and should stay there.** The submission runs in CI for
-exactly that reason: the dev Mac has the `.p8` but not `ASC_ISSUER_ID`, and there is no
-reason to put it there.
+**In CI they live in GitHub secrets and should stay there.** Locally (2026-11-22) the one
+Apple-team key is in the login Keychain, never a file on disk: `tools/asc_key.py` reads the
+environment first, then this app's own `tidbits:ASC_*` items, then the shared items under
+account `archivewatch` (`archivewatch:ASC_KEY_P8`, `:ASC_KEY_ID`, `:ASC_ISSUER_ID`; a chunk
+count with base64 pieces at `NAME.0 ...`). `tools/asc.py`, `asc_certs.py`, `asc_profiles.py` and
+`asc_submit.py` use it directly; `tools/with_asc.sh COMMAND` gives a shell script a private
+temp `.p8` (removed on exit), and `tools/submit-appstore.sh` wraps itself with it. Test:
+`python3 tools/test_asc_key.py`. The Play service account is the shared Keychain item
+`archivewatch:PLAY_SERVICE_ACCOUNT_JSON` (`asc_key.play_json()`; `submit-play.sh` and
+`push-play-content.py` read it); CI sets `PLAY_SERVICE_ACCOUNT_JSON` as a file path.
 
 `ASC_KEY_ID` · `ASC_ISSUER_ID` · `ASC_KEY_P8` (**base64**, not raw PEM — passing it
 through raw fails with `Unable to load PEM file ... MalformedFraming`).

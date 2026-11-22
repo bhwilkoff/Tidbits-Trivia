@@ -64,17 +64,16 @@ resolves the signing config from `android/keystore/signing.properties` (gitignor
 falling back to the CI-injected `UPLOAD_*` project properties; the file wins when present so a local
 build never picks up a sibling app's `UPLOAD_*` from the shared `~/.gradle/gradle.properties` (which is
 Archive Watch's). **Play API auth reuses the Archive Watch service account**
-(`~/.config/play/archivewatch-play.json`, `archivewatch-ci@archivewatch-play.iam.gserviceaccount.com`) —
-it has release permission on the Tidbits app under the same Play developer account, so pass
-`PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/archivewatch-play.json` until a dedicated `tidbits-play.json`
-is issued.
+(the login Keychain item `archivewatch:PLAY_SERVICE_ACCOUNT_JSON`, `archivewatch-ci@archivewatch-play.iam.gserviceaccount.com`) —
+it has release permission on the Tidbits app under the same Play developer account, so the local tools read that Keychain
+item (`tools/asc_key.py`) until a dedicated Tidbits account is issued.
 
 Two paths, both via the Play Developer API:
 
 - **CLI (the set-up pathway, production-capable):** `tools/submit-play.sh [--track production|internal]
   [--notes "…"]` builds the release AAB and uploads it via `tools/play-publish.py` (Play Developer API
   v3, `PLAY_PACKAGE=com.tidbitstrivia.app`). Needs the upload keystore in `~/.gradle/gradle.properties`
-  and the service-account JSON at `~/.config/play/tidbits-play.json` (or `PLAY_SERVICE_ACCOUNT_JSON`).
+  and the service account in the login Keychain (CI: `PLAY_SERVICE_ACCOUNT_JSON`).
 - **CI (tag-gated → Internal Testing):** `.github/workflows/android-build.yml` builds the AAB and
   uploads to the **internal** track on a `v*-android` tag push (`r0adkll/upload-google-play`,
   `packageName: com.tidbitstrivia.app`). Secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`,
@@ -97,7 +96,7 @@ they don't need the Console:
   Screenshots live pre-padded in `branding/play-screenshots/` (1311×2622, exactly 2:1); the iPhone-native
   `branding/screenshots/` shots are 1206×2622 ≈ 2.17:1 and Play rejects them (phone max aspect ratio 2:1).
 
-Run: `PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/archivewatch-play.json tools/push-play-content.py`.
+Run: `tools/push-play-content.py` (the service account comes from the Keychain).
 
 **Still Console-only (no API endpoint exists):** content rating (IARC questionnaire), target audience &
 content, privacy policy URL (not in `edits.details` or `Listing`), ads declaration, and App access

@@ -6,9 +6,8 @@ the console UI. This asks the API instead, so "is the IAP submitted" has an answ
 with a timestamp on it.
 
 Auth uses the same ES256 key the cloud build already uses
-(`~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`).
+(the login Keychain, tools/asc_key.py).
 
-    export ASC_KEY_ID=G5549XF8RV ASC_ISSUER_ID=<uuid>
     python3 tools/asc.py apps
     python3 tools/asc.py get 'v1/apps/<id>/inAppPurchasesV2?limit=200'
 """
@@ -27,12 +26,10 @@ def token():
         import jwt
     except ImportError:
         sys.exit("pip install pyjwt cryptography (or use tools/.play-venv)")
-    kid = os.environ.get("ASC_KEY_ID") or sys.exit("set ASC_KEY_ID")
-    iss = os.environ.get("ASC_ISSUER_ID") or sys.exit("set ASC_ISSUER_ID")
-    path = os.environ.get(
-        "ASC_KEY_PATH", os.path.expanduser(f"~/.appstoreconnect/private_keys/AuthKey_{kid}.p8"))
-    with open(path) as f:
-        key = f.read()
+    import asc_key
+    kid = asc_key.value("ASC_KEY_ID") or sys.exit("no ASC_KEY_ID (environment or Keychain)")
+    iss = asc_key.value("ASC_ISSUER_ID") or sys.exit("no ASC_ISSUER_ID (environment or Keychain)")
+    key = asc_key.key_pem(kid)
     now = int(time.time())
     return jwt.encode(
         {"iss": iss, "iat": now, "exp": now + 19 * 60, "aud": "appstoreconnect-v1"},

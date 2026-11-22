@@ -4,7 +4,7 @@ its certificate id. Used by tools/submit-appstore.sh for MANUAL signing — clou
 fails for this team's API key, but the key can create certs directly via REST.
 
 Usage:  asc_certs.py <distribution|mac_installer>
-Env:    ASC_KEY_ID, ASC_ISSUER_ID, ~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8 (or ASC_KEY_PATH)
+Env:    ASC_KEY_ID, ASC_ISSUER_ID, the login Keychain (tools/asc_key.py)
 
 If a usable cert of the requested type already exists in App Store Connect it is reused (its id is
 printed). Otherwise a private key + CSR are generated with openssl, the cert is created via the API,
@@ -17,11 +17,13 @@ import jwt
 TYPE = {"distribution": "DISTRIBUTION", "mac_installer": "MAC_INSTALLER_DISTRIBUTION"}
 
 def token():
-    kid = os.environ["ASC_KEY_ID"]; iss = os.environ["ASC_ISSUER_ID"]
-    kp = os.environ.get("ASC_KEY_PATH", os.path.expanduser(f"~/.appstoreconnect/private_keys/AuthKey_{kid}.p8"))
+    import asc_key
+    kid = asc_key.value("ASC_KEY_ID") or sys.exit("no ASC_KEY_ID (environment or Keychain)")
+    iss = asc_key.value("ASC_ISSUER_ID") or sys.exit("no ASC_ISSUER_ID (environment or Keychain)")
+    pem = asc_key.key_pem(kid)
     now = int(time.time())
     return jwt.encode({"iss": iss, "iat": now, "exp": now + 600, "aud": "appstoreconnect-v1"},
-                      open(kp).read(), algorithm="ES256", headers={"kid": kid, "typ": "JWT"})
+                      pem, algorithm="ES256", headers={"kid": kid, "typ": "JWT"})
 
 def api(method, path, body=None):
     data = json.dumps(body).encode() if body else None

@@ -4,7 +4,7 @@ DON'T need the Console. Submits the Data Safety declaration (tools/play-data-saf
 store listing (title, descriptions, phone screenshots from branding/play-screenshots/). The build/upload
 of the AAB is separate — see tools/submit-play.sh.
 
-  PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/archivewatch-play.json tools/push-play-content.py
+  tools/push-play-content.py   (the service account comes from the login Keychain, or PLAY_SERVICE_ACCOUNT_JSON in CI)
         [--listing-only | --data-safety-only]
 
 Console-only (no API exists): content rating (IARC), target audience, privacy policy URL, ads
@@ -14,14 +14,13 @@ Keep TITLE/SHORT/FULL in sync with docs/play-store-listing.md. Screenshots in br
 are pre-padded to <=2:1 (Play's phone-screenshot max aspect ratio); the iPhone-native 1206x2622 shots in
 branding/screenshots/ are 2.17:1 and Play rejects them.
 """
-import os, glob, sys, argparse
+import os, glob, sys, argparse, json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError
 
 PKG = os.environ.get("PLAY_PACKAGE", "com.tidbitstrivia.app")
-KEY = os.environ.get("PLAY_SERVICE_ACCOUNT_JSON", os.path.expanduser("~/.config/play/tidbits-play.json"))
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV = os.path.join(ROOT, "tools", "play-data-safety.csv")
 SHOTS = os.path.join(ROOT, "branding", "play-screenshots")
@@ -51,10 +50,12 @@ Tidbits is also on the web, iPhone, iPad, and Apple TV - same game everywhere.""
 
 
 def svc():
-    if not os.path.isfile(KEY):
-        raise SystemExit(f"Service-account JSON not found: {KEY} (set PLAY_SERVICE_ACCOUNT_JSON)")
-    creds = service_account.Credentials.from_service_account_file(
-        KEY, scopes=["https://www.googleapis.com/auth/androidpublisher"])
+    import asc_key
+    info_text = asc_key.play_json()
+    if not info_text:
+        raise SystemExit("No Play service account: set PLAY_SERVICE_ACCOUNT_JSON (a file) or use the login Keychain")
+    creds = service_account.Credentials.from_service_account_info(
+        json.loads(info_text), scopes=["https://www.googleapis.com/auth/androidpublisher"])
     return build("androidpublisher", "v3", credentials=creds, cache_discovery=False)
 
 

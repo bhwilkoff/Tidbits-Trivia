@@ -6,15 +6,14 @@ at the new versionCode with release notes, then commit.
 
 Usage:  play-publish.py <app-release.aab> [--track production|internal|alpha|beta]
                         [--notes "release notes"] [--rollout 0.1] [--draft]
-Env:    PLAY_SERVICE_ACCOUNT_JSON  path to the service-account JSON key
-                                   (default ~/.config/play/archivewatch-play.json)
+Env:    PLAY_SERVICE_ACCOUNT_JSON  path to the service-account JSON key (CI); locally the login Keychain
         PLAY_PACKAGE               package name (default com.archivewatch.app)
 
 The service account must be granted release permissions for the app in Play Console
 (Users and permissions). The JSON key belongs in NO git repo — keep it under ~/.config/play.
 Requires: google-api-python-client, google-auth (tools/submit-play.sh installs them into a venv).
 """
-import sys, os, argparse
+import sys, os, argparse, json
 
 def main():
     ap = argparse.ArgumentParser()
@@ -26,21 +25,21 @@ def main():
     args = ap.parse_args()
 
     pkg = os.environ.get("PLAY_PACKAGE", "com.archivewatch.app")
-    key = os.environ.get("PLAY_SERVICE_ACCOUNT_JSON",
-                         os.path.expanduser("~/.config/play/archivewatch-play.json"))
+    import asc_key
+    info_text = asc_key.play_json()
     if not os.path.isfile(args.aab):
         raise SystemExit(f"AAB not found: {args.aab}")
-    if not os.path.isfile(key):
-        raise SystemExit(f"Service-account JSON not found: {key}\n"
-                         f"Set PLAY_SERVICE_ACCOUNT_JSON or place it at ~/.config/play/archivewatch-play.json")
+    if not info_text:
+        raise SystemExit("No Play service account: set PLAY_SERVICE_ACCOUNT_JSON (a file, CI) or keep it in the "
+                         "login Keychain (archivewatch:PLAY_SERVICE_ACCOUNT_JSON)")
 
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
     from googleapiclient.http import MediaFileUpload
     from googleapiclient.errors import HttpError
 
-    creds = service_account.Credentials.from_service_account_file(
-        key, scopes=["https://www.googleapis.com/auth/androidpublisher"])
+    creds = service_account.Credentials.from_service_account_info(
+        json.loads(info_text), scopes=["https://www.googleapis.com/auth/androidpublisher"])
     service = build("androidpublisher", "v3", credentials=creds, cache_discovery=False)
     edits = service.edits()
 

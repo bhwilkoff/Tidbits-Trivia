@@ -1,7 +1,7 @@
 # Wave E — the $0 aggregate plane (§M). Hourly: read the per-venue/season standings from
 # RTDB (public read), rank, and commit static leaderboard JSON to data/leaderboard/. The
-# commit triggers the Pages deploy, so clients read a free/cacheable static file instead of
-# hitting RTDB. One RTDB read + at most one commit per hour — far under the Spark free tier.
+# job then dispatches pages.yml (its GITHUB_TOKEN push cannot trigger a deploy), so
+# clients read a free/cacheable static file instead of hitting RTDB. One RTDB read + at most one commit per hour — far under the Spark free tier.
 name: Aggregate leaderboard
 
 on:
@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # gh workflow run pages.yml after a push
 
 concurrency:
   group: "leaderboard"
@@ -23,7 +24,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Aggregate standings → static JSON
         run: python3 tools/aggregate_leaderboard.py
-      - name: Commit if changed (triggers the Pages deploy)
+      - name: Commit if changed, then dispatch the Pages deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "tidbits-leaderboard-bot"
           git config user.email "bot@users.noreply.github.com"
@@ -34,4 +37,7 @@ jobs:
             git commit -m "leaderboard: refresh static JSON"
             git pull --rebase --autostash origin main || true
             git push
+            # A push made with GITHUB_TOKEN never starts another workflow, so the
+            # commit alone does not deploy; dispatch is the one event it may start.
+            gh workflow run pages.yml --ref main
           fi

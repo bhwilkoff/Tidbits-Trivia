@@ -25,6 +25,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     # macos-15 ships Xcode 16.4, whose macOS SDK is 15.x — and this project's

@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # gh workflow run pages.yml after a push
 
 concurrency:
   group: "dailyboard"
@@ -32,7 +33,9 @@ jobs:
       # and a client's dayKey() is its LOCAL date.
       - name: Publish the Daily's questions
         run: python3 tools/publish_daily.py --corpus assets/corpus.json
-      - name: Commit if changed (triggers the Pages deploy)
+      - name: Commit if changed, then dispatch the Pages deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "tidbits-dailyboard-bot"
           git config user.email "bot@users.noreply.github.com"
@@ -43,4 +46,7 @@ jobs:
             git commit -m "dailyboard: refresh static JSON + the day's published questions"
             git pull --rebase --autostash origin main || true
             git push
+            # A push made with GITHUB_TOKEN never starts another workflow, so the
+            # commit alone does not deploy; dispatch is the one event it may start.
+            gh workflow run pages.yml --ref main
           fi

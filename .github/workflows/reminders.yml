@@ -27,6 +27,8 @@ jobs:
           python-version: "3.12"
       - name: Install send libs (only needed once secrets exist)
         run: pip install --quiet google-auth httpx[http2] PyJWT[crypto] pywebpush
+      - name: A failed token is not retried every day
+        run: python3 tools/test_send_reminders.py
       - name: Send reminders
         env:
           FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}

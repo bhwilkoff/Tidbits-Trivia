@@ -16,14 +16,68 @@ Env (all optional; a leg runs only if its inputs are present):
   VAPID_PRIVATE_KEY, VAPID_SUBJECT   — web
 """
 import datetime
+import hashlib
 import json
 import os
 import sys
+import time
+import urllib.error
 import urllib.request
 
 RTDB = "https://tidbits-trivia-f2ddb-default-rtdb.firebaseio.com"
 TITLE = "Your Daily is ready"
 BODY = "Today's seven are up. Keep your streak — and see where you land against the world."
+
+# A token that failed waits before it is tried again, longer each time, and then is given
+# up on and reported, never retried daily (owner 2026-11-23: "fix the re-scan of the exact
+# same failures. We should never build something that does that."). The push service saying
+# the token is gone (404/410/400) starts at a week; a 429/5xx/network blip at a day. A new
+# token from the device is a new record, so reinstalling opens it again.
+DAY = 86400
+WAITS = {True: (7, 30), False: (1, 7, 30)}
+MAX_TRIES = max(len(w) for w in WAITS.values()) + 1
+FAILURES = "pushFailures"
+
+
+def now_s() -> float:
+    return time.time()
+
+
+def token_key(token) -> str:
+    raw = token if isinstance(token, str) else json.dumps(token, sort_keys=True)
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+def due(record, token, now) -> bool:
+    """Send unless this same token failed and its wait is not over, or it has been given up on."""
+    if not isinstance(record, dict) or record.get("token") != token_key(token):
+        return True
+    waits = WAITS[bool(record.get("permanent"))]
+    tries = int(record.get("tries", 0))
+    if tries > len(waits):
+        return False
+    return now - float(record.get("at", 0)) >= waits[tries - 1] * DAY
+
+
+def failed(record, token, now, reason, permanent) -> dict:
+    same = isinstance(record, dict) and record.get("token") == token_key(token)
+    return {"token": token_key(token), "tries": (int(record.get("tries", 0)) if same else 0) + 1,
+            "at": int(now), "reason": reason[:120], "permanent": bool(permanent)}
+
+
+def given_up(record) -> bool:
+    return isinstance(record, dict) and int(record.get("tries", 0)) > len(WAITS[bool(record.get("permanent"))])
+
+
+def outcome(code: int | None, label: str):
+    """(ok, reason, permanent); reason None means not the token's fault (our key), so nothing is recorded."""
+    if code == 200:
+        return True, None, False
+    if code in (400, 404, 410):
+        return False, f"{label} {code}", True
+    if code is None or code == 429 or code >= 500:
+        return False, f"{label} {code or 'network'}", False
+    return False, None, False
 
 
 def today() -> str:
@@ -50,6 +104,14 @@ def admin_get(path: str, access_token: str) -> dict:
         return json.load(r) or {}
 
 
+def admin_patch(path: str, access_token: str, updates: dict) -> None:
+    req = urllib.request.Request(f"{RTDB}/{path}.json?access_token={access_token}",
+                                 data=json.dumps(updates).encode(), method="PATCH",
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        r.read()
+
+
 def recipients(push_tokens: dict, played: set[str]) -> dict:
     """{uid: {platform: token}} for uids with a token who have NOT played today."""
     out = {}
@@ -60,12 +122,12 @@ def recipients(push_tokens: dict, played: set[str]) -> dict:
     return out
 
 
-def send_apns(token: str, cfg: dict) -> bool:
+def send_apns(token: str, cfg: dict):
     try:
         import jwt  # PyJWT
         import httpx
     except ImportError:
-        return False
+        return False, None, False
     now = int(datetime.datetime.now().timestamp())
     auth = jwt.encode({"iss": cfg["team"], "iat": now},
                       cfg["key"], algorithm="ES256", headers={"kid": cfg["kid"]})
@@ -76,13 +138,15 @@ def send_apns(token: str, cfg: dict) -> bool:
         with httpx.Client(http2=True) as c:
             resp = c.post(f"https://api.push.apple.com/3/device/{token}",
                           headers=headers, json=payload, timeout=20)
-        return resp.status_code == 200
+        if resp.status_code != 200:
+            print(f"  apns error: HTTP {resp.status_code}")
+        return outcome(resp.status_code, "apns")
     except Exception as e:
         print(f"  apns error: {e}")
-        return False
+        return outcome(None, "apns")
 
 
-def send_fcm(token: str, project: str, access_token: str) -> bool:
+def send_fcm(token: str, project: str, access_token: str):
     body = json.dumps({"message": {"token": token,
                                    "notification": {"title": TITLE, "body": BODY}}}).encode()
     req = urllib.request.Request(
@@ -91,25 +155,29 @@ def send_fcm(token: str, project: str, access_token: str) -> bool:
                             "Content-Type": "application/json"}, method="POST")
     try:
         urllib.request.urlopen(req, timeout=20)
-        return True
+        return outcome(200, "fcm")
+    except urllib.error.HTTPError as e:
+        print(f"  fcm error: {e}")
+        return outcome(e.code, "fcm")
     except Exception as e:
         print(f"  fcm error: {e}")
-        return False
+        return outcome(None, "fcm")
 
 
-def send_web(sub, vapid_key: str, subject: str) -> bool:
+def send_web(sub, vapid_key: str, subject: str):
     try:
         from pywebpush import webpush
     except ImportError:
-        return False
+        return False, None, False
     try:
         webpush(subscription_info=sub if isinstance(sub, dict) else json.loads(sub),
                 data=json.dumps({"title": TITLE, "body": BODY}),
                 vapid_private_key=vapid_key, vapid_claims={"sub": subject})
-        return True
+        return outcome(200, "web")
     except Exception as e:
         print(f"  web error: {e}")
-        return False
+        resp = getattr(e, "response", None)
+        return outcome(getattr(resp, "status_code", None), "web")
 
 
 def main():
@@ -137,15 +205,41 @@ def main():
     vapid_key = os.environ.get("VAPID_PRIVATE_KEY")
     vapid_sub = os.environ.get("VAPID_SUBJECT", "mailto:ben@learningischange.com")
 
+    legs = {"ios": (lambda t: send_apns(t, apns_cfg)) if apns_cfg else None,
+            "android": lambda t: send_fcm(t, project, token),
+            "web": (lambda t: send_web(t, vapid_key, vapid_sub)) if vapid_key else None}
+    failures = admin_get(FAILURES, token)
+    now = now_s()
     sent = {"ios": 0, "android": 0, "web": 0}
+    waiting, updates = 0, {}
     for uid, platforms in targets.items():
-        if apns_cfg and "ios" in platforms and send_apns(platforms["ios"], apns_cfg):
-            sent["ios"] += 1
-        if "android" in platforms and send_fcm(platforms["android"], project, token):
-            sent["android"] += 1
-        if vapid_key and "web" in platforms and send_web(platforms["web"], vapid_key, vapid_sub):
-            sent["web"] += 1
-    print(f"sent: {sent}")
+        mine = failures.get(uid) if isinstance(failures.get(uid), dict) else {}
+        for platform, send in legs.items():
+            if not send or platform not in platforms:
+                continue
+            t, record = platforms[platform], mine.get(platform)
+            if not due(record, t, now):
+                waiting += 1
+                continue
+            ok, reason, permanent = send(t)
+            if ok:
+                sent[platform] += 1
+                if record is not None:
+                    updates[f"{uid}/{platform}"] = None
+            elif reason:
+                updates[f"{uid}/{platform}"] = failed(record, t, now, reason, permanent)
+    if updates:
+        try:
+            admin_patch(FAILURES, token, updates)
+        except Exception as e:
+            print(f"could not record failures ({e}); they will be tried again next run")
+    merged = {u: dict(v) for u, v in failures.items() if isinstance(v, dict)}
+    for k, v in updates.items():
+        u, p = k.split("/")
+        merged.setdefault(u, {})[p] = v
+    gone = sum(1 for v in merged.values() for r in v.values() if given_up(r))
+    print(f"sent: {sent}; {waiting} waiting after a failure; "
+          f"{gone} given up after {MAX_TRIES} tries or fewer (until the device sends a new token)")
 
 
 if __name__ == "__main__":

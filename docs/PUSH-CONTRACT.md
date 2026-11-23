@@ -46,6 +46,12 @@ pushTokens/{uid}/{platform} = <token or subscription blob>
   # web     -> JSON of the PushSubscription (endpoint + p256dh + auth)
 ```
 
+The cron alone writes `pushFailures/{uid}/{platform} = {token, tries, at, reason,
+permanent}` (`token` is a hash, never the token). A failed token waits 7 then 30
+days when the push service says it is gone (404/410/400), 1, 7, 30 after a
+429/5xx/network blip, and is then given up on and counted in the run's log; a
+new token from the device starts over. No client rule: admin only (2026-11-23).
+
 Rule (mirrors `playersPrivate`):
 ```json
 "pushTokens": {
